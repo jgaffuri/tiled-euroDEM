@@ -37,7 +37,7 @@ if tiling:
 
         # prepare dict for geotiff bands
         dict = {}
-        dict["v"] = {"file":out_folder+"dem_"+str(resolution) + "m_.tif", "band":1}
+        dict["v"] = {"file":out_folder+"dem_"+str(resolution) + "m_.tif", "band":1, "no_data_values": [0, None, -9999]}
 
         # launch tiling
         gridtiler_raster.tiling_raster(
