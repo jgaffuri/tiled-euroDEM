@@ -6,10 +6,6 @@ from rasterio.enums import Resampling
 #from rasterio.warp import reproject
 from rasterio.features import rasterize
 import numpy as np
-import os
-import fiona
-import geopandas as gpd
-from shapely.geometry import shape
 
 
 def resample_geotiff_aligned(input_path, output_path, new_resolution, resampling=Resampling.average, dtype=np.float64):
