@@ -8,7 +8,7 @@ from datetime import datetime
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "../..")))
 from geotiff import resample_geotiff_aligned
 
-aggregate = True
+aggregate = False
 tiling = True
 
 input_dem = "/home/juju/geodata/gisco/EU_DEM_mosaic_1000K/eudem_dem_3035_europe.tif"
@@ -21,8 +21,10 @@ if not os.path.exists(out_folder): os.makedirs(out_folder)
 if aggregate:
     print(datetime.now(), "aggregate")
     for resolution in resolutions:
+        out = out_folder+"dem_"+str(resolution) + "m_.tif"
+        if os.path.exists(out): continue
         print(datetime.now(), resolution)
-        resample_geotiff_aligned(input_dem, out_folder+"dem_"+str(resolution) + "m_.tif", resolution, Resampling.med)
+        resample_geotiff_aligned(input_dem, out, resolution, Resampling.med)
 
 
 if tiling:
@@ -33,6 +35,7 @@ if tiling:
 
         # make folder for resolution
         folder_ = out_folder+"tiles_"+str(resolution)+"/"
+        if os.path.exists(folder_): continue
         if not os.path.exists(folder_): os.makedirs(folder_)
 
         # prepare dict for geotiff bands
