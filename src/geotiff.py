@@ -1,8 +1,15 @@
 from math import ceil, floor
 import rasterio
-from rasterio.transform import Affine
+from rasterio.transform import from_bounds, Affine
+from rasterio.windows import Window, from_bounds as window_from_bounds
 from rasterio.enums import Resampling
+#from rasterio.warp import reproject
+from rasterio.features import rasterize
 import numpy as np
+import os
+import fiona
+import geopandas as gpd
+from shapely.geometry import shape
 
 
 def resample_geotiff_aligned(input_path, output_path, new_resolution, resampling=Resampling.average, dtype=np.float64):
