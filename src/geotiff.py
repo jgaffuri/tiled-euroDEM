@@ -73,3 +73,33 @@ def resample_geotiff_aligned(input_path, output_path, new_resolution, resampling
                 )
 
 
+
+def mask_pixels_with_lambda(geotiff_path, band_number, predicate):
+    """
+    geotiff_path : str
+        Path to the input GeoTIFF. The file will be overwritten.
+    band_number : int
+        1-based band index.
+    predicate : function
+        A lambda or function f(value) -> bool that returns True where pixels
+        should be set to nodata.
+    """
+
+    # Open input in read/write mode
+    with rasterio.open(geotiff_path, "r+") as ds:
+        nodata = ds.nodata
+        if nodata is None:
+            raise ValueError("The raster has no nodata value defined.")
+
+        # Read only the given band
+        data = ds.read(band_number)
+
+        # Apply lambda to every pixel
+        mask = np.vectorize(predicate)(data)
+
+        # Set masked pixels to nodata
+        data[mask] = nodata
+
+        # Write the modified band back to file
+        ds.write(data, band_number)
+

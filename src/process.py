@@ -6,7 +6,16 @@ import os
 from rasterio.enums import Resampling
 from datetime import datetime
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "../..")))
-from geotiff import resample_geotiff_aligned
+from geotiff import resample_geotiff_aligned, mask_pixels_with_lambda
+
+#TODO
+# apply mask_pixels_with_lambda to tiffs
+# copy mask_pixels_with_lambda to pysco
+# tile
+# test
+# publish
+# use !
+
 
 aggregate = True
 tiling = True
