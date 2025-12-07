@@ -6,7 +6,7 @@ import os
 from rasterio.enums import Resampling
 from datetime import datetime
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "../..")))
-from utils.geotiff import resample_geotiff_aligned
+from geotiff import resample_geotiff_aligned
 
 aggregate = True
 tiling = True
@@ -18,56 +18,40 @@ out_folder = "tmp/"
 if not os.path.exists(out_folder): os.makedirs(out_folder)
 
 
+
+
 # aggregate at various resolutions - average
 if aggregate:
     print(datetime.now(), "aggregate")
-    for year in ["2023", "2020"]:
-        for service in services:
+    for resolution in resolutions:
+        print(datetime.now(), resolution)
+        resample_geotiff_aligned(input_dem, out_folder+"dem_"+str(resolution) + "m_.tif", resolution, Resampling.med)
 
-            # it is better to resample all resolution from 100m one. Otherwise, we do averages of averages which may create some biais around places with many nodata pixels
-            for resolution in resolutions:
-                print(datetime.now(), service, year, resolution)
-                resample_geotiff_aligned(f0 + "euro_access_"+service+"_"+year+"_100m_"+version_tag+".tif", folder+"euro_access_"+service+"_" + year+"_"+str(resolution) + "m_"+version_tag+".tif", resolution, Resampling.med)
 
-            '''
-            print(service, year, 1000)
-            resample_geotiff_aligned(folder+"euro_access_"+service+"_"+year+"_500m.tif", folder+"euro_access_"+service+"_" + year+"_1000m.tif", 1000, Resampling.average)
 
-            for resolution in [2000, 5000, 10000]:
-                print(service, year, resolution)
-                resample_geotiff_aligned(folder+"euro_access_"+service+"_" + year+"_1000m.tif", folder+"euro_access_"+service+"_" + year+"_"+str(resolution)+"m.tif", resolution, Resampling.average)
-
-            for resolution in [20000, 50000, 100000]:
-                print(service, year, resolution)
-                resample_geotiff_aligned(folder+"euro_access_"+service+"_" + year+"_10000m.tif", folder+"euro_access_"+service+"_" + year+"_"+str(resolution)+"m.tif", resolution, Resampling.average)
-            '''
 
 if tiling:
     print(datetime.now(), "tiling")
     for resolution in resolutions:
-        for service in services:
 
-            print(datetime.now(), "Tiling", service, resolution)
+        print(datetime.now(), "Tiling", resolution)
 
-            # make folder for resolution
-            folder_ = folder+"tiles_"+service+"_"+version_tag+"/"+str(resolution)+"/"
-            if not os.path.exists(folder_): os.makedirs(folder_)
+        # make folder for resolution
+        folder_ = out_folder+"tiles_"+str(resolution)+"/"
+        if not os.path.exists(folder_): os.makedirs(folder_)
 
-            # prepare dict for geotiff bands
-            dict = {}
-            for year in ["2020", "2023"]:
-                dict["dt_1_" + year] = {"file":folder+"euro_access_"+service+"_"+year+"_"+str(resolution)+"m_"+version_tag+".tif", "band":1}
-                dict["dt_a3_" + year] = {"file":folder+"euro_access_"+service+"_"+year+"_"+str(resolution)+"m_"+version_tag+".tif", "band":2}
-                dict["POP_2021"] = { "file":folder_pop_tiff+"pop_2021_"+str(resolution)+".tif", "band":1 }
+        # prepare dict for geotiff bands
+        dict = {}
+        dict["v"] = {"file":out_folder+"dem_"+str(resolution) + "m_.tif", "band":1}
 
-            # launch tiling
-            gridtiler_raster.tiling_raster(
-                dict,
-                folder_,
-                crs="EPSG:3035",
-                tile_size_cell = 256,
-                format="parquet",
-                num_processors_to_use = 10,
-                modif_fun = round,
-                )
+        # launch tiling
+        gridtiler_raster.tiling_raster(
+            dict,
+            folder_,
+            crs="EPSG:3035",
+            tile_size_cell = 256,
+            format="parquet",
+            num_processors_to_use = 10,
+            modif_fun = lambda x:round(x,1),
+            )
 
