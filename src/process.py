@@ -11,15 +11,11 @@ from utils.geotiff import resample_geotiff_aligned
 aggregate = True
 tiling = True
 
-version_tag = "v2025_11"
-services = ["education", "healthcare"]  #education healthcare
-resolutions = [ 100000, 50000, 20000, 10000, 5000, 2000, 1000, 500, 200, 100 ]
+input_dem = "/home/juju/geodata/gisco/EU_DEM_mosaic_1000K/eudem_dem_3035_europe.tif"
+resolutions = [ 100000, 50000, 20000, 10000, 5000, 2000, 1000, 500, 200, 100, 50 ]
 
-f0 = "/home/juju/gisco/accessibility/"
-folder = f0 + "gridviz/"
-if not os.path.exists(folder): os.makedirs(folder)
-
-folder_pop_tiff = "/home/juju/geodata/census/2021/aggregated_tiff/"
+out_folder = "tmp/"
+if not os.path.exists(out_folder): os.makedirs(out_folder)
 
 
 # aggregate at various resolutions - average
