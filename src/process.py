@@ -18,16 +18,11 @@ out_folder = "tmp/"
 if not os.path.exists(out_folder): os.makedirs(out_folder)
 
 
-
-
-# aggregate at various resolutions - average
 if aggregate:
     print(datetime.now(), "aggregate")
     for resolution in resolutions:
         print(datetime.now(), resolution)
         resample_geotiff_aligned(input_dem, out_folder+"dem_"+str(resolution) + "m_.tif", resolution, Resampling.med)
-
-
 
 
 if tiling:
