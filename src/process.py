@@ -1,111 +1,77 @@
-from pygridmap import gridtiler
-from datetime import datetime
+# prepare accessibility grid for gridviz mapping
+
+from pygridmap import gridtiler_raster
+import sys
 import os
+from rasterio.enums import Resampling
+from datetime import datetime
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "../..")))
+from utils.geotiff import resample_geotiff_aligned
 
-
-aggregated_folder = "/home/juju/geodata/census/2021/aggregated/"
-if not os.path.exists(aggregated_folder): os.makedirs(aggregated_folder)
-
-transform = True
 aggregate = True
 tiling = True
 
+version_tag = "v2025_11"
+services = ["education", "healthcare"]  #education healthcare
+resolutions = [ 100000, 50000, 20000, 10000, 5000, 2000, 1000, 500, 200, 100 ]
 
-# fid,GRD_ID,T,M,F,Y_LT15,Y_1564,Y_GE65,EMP,NAT,EU_OTH,OTH,SAME,CHG_IN,CHG_OUT,LAND_SURFACE,POPULATED,COUNT,
-# T_CI,M_CI,F_CI,Y_LT15_CI,Y_1564_CI,Y_GE65_CI,EMP_CI,NAT_CI,EU_OTH_CI,OTH_CI,SAME_CI,CHG_IN_CI,CHG_OUT_CI
+f0 = "/home/juju/gisco/accessibility/"
+folder = f0 + "gridviz/"
+if not os.path.exists(folder): os.makedirs(folder)
 
-#transform
-
-if transform:
-    def tr(c):
-
-        # skip non populated non confidential cells
-        if c['T'] == "0" and c['T_CI'] != "-9999": return False
-
-        # remove useless information
-        del c['fid']
-        #del c['LAND_SURFACE']
-        del c['POPULATED']
-        #del c['COUNT']
-
-        #extrac x,y
-        gid = c['GRD_ID'].replace("CRS3035RES1000mN", "").split('E')
-        del c['GRD_ID']
-        c['x'] = gid[1]
-        c['y'] = gid[0]
-
-        # not available data is marked as "0"
-        for code in ["T", "M","F","Y_LT15","Y_1564","Y_GE65","EMP","NAT","EU_OTH","OTH","SAME","CHG_IN","CHG_OUT"]:
-            if c[code] == '': c[code] = 0
-            elif int(c[code]) == -9999: c[code] = 0
-            elif int(c[code]) < 0:
-                print(gid, code, c[code])
-                c[code] = 0
-
-        # ensures confidentiality fields are set to 0 or 1
-        for cc in [ "T_CI", "M_CI", "F_CI", "Y_LT15_CI", "Y_1564_CI", "Y_GE65_CI", "EMP_CI", "NAT_CI", "EU_OTH_CI", "OTH_CI", "SAME_CI", "CHG_IN_CI", "CHG_OUT_CI" ]:
-            if c[cc] == "": c[cc] = 0
-            elif c[cc] == "0": c[cc] = 0
-            #elif c[cc] == "1": c[cc] = 1
-            elif c[cc] == "-9999": c[cc] = 1
-            #elif c[cc] == "-9986": c[cc] = 1
-            else: print(c[cc])
-
-        #check negative values
-        for code in ["T", "M","F","Y_LT15","Y_1564","Y_GE65","EMP","NAT","EU_OTH","OTH","SAME","CHG_IN","CHG_OUT",
-        "T_CI", "M_CI", "F_CI", "Y_LT15_CI", "Y_1564_CI", "Y_GE65_CI", "EMP_CI", "NAT_CI", "EU_OTH_CI", "OTH_CI", "SAME_CI", "CHG_IN_CI", "CHG_OUT_CI"]:
-            if int(c[code])<0: print(code, c[code])
-
-        #initialise nb - to count the number of cells aggregated
-        c['nb'] = 1
-
-    gridtiler.grid_transformation("/home/juju/geodata/census/2021/ESTAT_Census_2021_V2.csv", tr, aggregated_folder+"1000.csv")
+folder_pop_tiff = "/home/juju/geodata/census/2021/aggregated_tiff/"
 
 
-
-#aggregation
+# aggregate at various resolutions - average
 if aggregate:
+    print(datetime.now(), "aggregate")
+    for year in ["2023", "2020"]:
+        for service in services:
 
-    # the aggregation function:
-    # as soon as one value is NA, then the aggregated is NA
-    '''''
-    def aggregation_sum_NA(values, _=0):
-        sum = 0
-        for value in values:
-            if value == "": return ""
-            sum += float(value)
-        return sum
-    '''''
-    aggregation_fun = {}
-    #for code in ["M","F","Y_LT15","Y_1564","Y_GE65","EMP","NAT","EU_OTH","OTH","SAME","CHG_IN","CHG_OUT"]: aggregation_fun[code] = aggregation_sum_NA
+            # it is better to resample all resolution from 100m one. Otherwise, we do averages of averages which may create some biais around places with many nodata pixels
+            for resolution in resolutions:
+                print(datetime.now(), service, year, resolution)
+                resample_geotiff_aligned(f0 + "euro_access_"+service+"_"+year+"_100m_"+version_tag+".tif", folder+"euro_access_"+service+"_" + year+"_"+str(resolution) + "m_"+version_tag+".tif", resolution, Resampling.med)
 
-    # launch aggregations
-    for a in [2,5,10]:
-        print(datetime.now(), "aggregation to", a*1000, "m")
-        gridtiler.grid_aggregation(input_file=aggregated_folder+"1000.csv", resolution=1000, output_file=aggregated_folder+str(a*1000)+".csv", a=a, aggregation_fun=aggregation_fun)
-    for a in [2,5,10]:
-        print(datetime.now(), "aggregation to", a*10000, "m")
-        gridtiler.grid_aggregation(input_file=aggregated_folder+"10000.csv", resolution=10000, output_file=aggregated_folder+str(a*10000)+".csv", a=a, aggregation_fun=aggregation_fun)
+            '''
+            print(service, year, 1000)
+            resample_geotiff_aligned(folder+"euro_access_"+service+"_"+year+"_500m.tif", folder+"euro_access_"+service+"_" + year+"_1000m.tif", 1000, Resampling.average)
 
+            for resolution in [2000, 5000, 10000]:
+                print(service, year, resolution)
+                resample_geotiff_aligned(folder+"euro_access_"+service+"_" + year+"_1000m.tif", folder+"euro_access_"+service+"_" + year+"_"+str(resolution)+"m.tif", resolution, Resampling.average)
 
+            for resolution in [20000, 50000, 100000]:
+                print(service, year, resolution)
+                resample_geotiff_aligned(folder+"euro_access_"+service+"_" + year+"_10000m.tif", folder+"euro_access_"+service+"_" + year+"_"+str(resolution)+"m.tif", resolution, Resampling.average)
+            '''
 
-
-# tiling
 if tiling:
-    for resolution in [1000, 2000, 5000, 10000, 20000, 50000, 100000]:
-        print(datetime.now(), "tiling for resolution", resolution)
+    print(datetime.now(), "tiling")
+    for resolution in resolutions:
+        for service in services:
 
-        #create output folder
-        out_folder = 'pub/v2/parquet/' + str(resolution)
-        if not os.path.exists(out_folder): os.makedirs(out_folder)
+            print(datetime.now(), "Tiling", service, resolution)
 
-        # launch tiling
-        gridtiler.grid_tiling(
-            aggregated_folder+str(resolution)+".csv",
-            out_folder,
-            resolution,
-            tile_size_cell = 256,
-            x_origin = 0,
-            y_origin = 0,
-            format = "parquet"
-        )
+            # make folder for resolution
+            folder_ = folder+"tiles_"+service+"_"+version_tag+"/"+str(resolution)+"/"
+            if not os.path.exists(folder_): os.makedirs(folder_)
+
+            # prepare dict for geotiff bands
+            dict = {}
+            for year in ["2020", "2023"]:
+                dict["dt_1_" + year] = {"file":folder+"euro_access_"+service+"_"+year+"_"+str(resolution)+"m_"+version_tag+".tif", "band":1}
+                dict["dt_a3_" + year] = {"file":folder+"euro_access_"+service+"_"+year+"_"+str(resolution)+"m_"+version_tag+".tif", "band":2}
+                dict["POP_2021"] = { "file":folder_pop_tiff+"pop_2021_"+str(resolution)+".tif", "band":1 }
+
+            # launch tiling
+            gridtiler_raster.tiling_raster(
+                dict,
+                folder_,
+                crs="EPSG:3035",
+                tile_size_cell = 256,
+                format="parquet",
+                num_processors_to_use = 10,
+                modif_fun = round,
+                )
+
