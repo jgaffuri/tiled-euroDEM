@@ -8,7 +8,7 @@ from datetime import datetime
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "../..")))
 from geotiff import resample_geotiff_aligned
 
-aggregate = False
+aggregate = True
 tiling = True
 
 input_dem = "/home/juju/geodata/gisco/EU_DEM_mosaic_1000K/eudem_dem_3035_europe.tif"
@@ -54,4 +54,3 @@ if tiling:
             num_processors_to_use = 10,
             modif_fun = modif_fun,
             )
-
