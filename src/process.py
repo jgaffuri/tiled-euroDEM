@@ -32,11 +32,11 @@ if not os.path.exists(out_folder): os.makedirs(out_folder)
 if aggregate:
     print(datetime.now(), "aggregate")
     for resolution in resolutions:
-        print(datetime.now(), resolution)
         output_dem = out_folder+"dem_"+str(resolution) + "m.tif"
         if os.path.exists(output_dem):
-            print(datetime.now(), "exists, skip")
+            print(datetime.now(), resolution, "exists, skip")
             continue
+        print(datetime.now(), resolution)
         resample_geotiff_aligned(input_dem, output_dem, resolution, Resampling.med)
 
 '''
@@ -53,13 +53,14 @@ if tiling:
     print(datetime.now(), "tiling")
     for resolution in resolutions:
 
-        print(datetime.now(), "Tiling", resolution)
-
         # make folder for resolution
         folder_ = out_folder+"tiles_"+str(resolution)+"/"
         if os.path.exists(folder_):
-            print(datetime.now(), "exists, skip")
+            print(datetime.now(), resolution, "exists, skip")
             continue
+
+        print(datetime.now(), "Tiling", resolution)
+
         if not os.path.exists(folder_): os.makedirs(folder_)
 
         # prepare dict for geotiff bands
