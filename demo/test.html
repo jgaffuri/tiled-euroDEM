@@ -22,6 +22,7 @@
     //define style
     const classNumber = 12
     const colors = d3.schemeYlOrRd[classNumber]
+    //interpolateCubehelixDefault
     const style = new gridviz.ShapeColorSizeStyle({
         color: (c, r, z, viewScale) => viewScale(c.v),
         viewScale: gridviz.viewScaleColorQuantile({
