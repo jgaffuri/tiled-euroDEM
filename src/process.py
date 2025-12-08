@@ -18,7 +18,8 @@ from geotiff import resample_geotiff_aligned, mask_pixels_with_lambda
 
 
 aggregate = True
-tiling = True
+set_no_data = True
+tiling = False
 
 input_dem = "/home/juju/geodata/gisco/EU_DEM_mosaic_1000K/eudem_dem_3035_europe.tif"
 resolutions = [ 20000, 10000, 5000, 2000, 1000, 500, 200, 100 ] #, 50, 25
@@ -38,6 +39,13 @@ if aggregate:
             print(datetime.now(), "exists, skip")
             continue
         resample_geotiff_aligned(input_dem, output_dem, resolution, Resampling.med)
+
+if set_no_data:
+    print(datetime.now(), "set no_data")
+    for resolution in resolutions:
+        print(datetime.now(), resolution)
+        output_dem = out_folder+"dem_"+str(resolution) + "m_.tif"
+        mask_pixels_with_lambda(output_dem, 1, lambda x: x <= 0)
 
 
 if tiling:
