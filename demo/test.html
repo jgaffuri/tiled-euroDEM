@@ -19,12 +19,21 @@
         backgroundColor: seaColor
     }).addZoomButtons()
 
-    const dataset = new gridviz.MultiResolutionDataset(
+    const datasetRelief = new gridviz.MultiResolutionDataset(
         [100, 200, 500, 1000, 2000, 5000, 10000, 20000],
         resolution => new gviz_par.TiledParquetGrid(map,
             "https://raw.githubusercontent.com/jgaffuri/tiled-euroDEM/main/pub/v1/tiles_" + resolution + "/"),
         { preprocess: (c) => c.v != undefined && c.v > 0 }
     )
+
+    const datasetPop = new gridviz.MultiResolutionDataset(
+        [1000, 2000, 5000, 10000, 20000, 50000, 100000],
+        resolution => new gviz_par.TiledParquetGrid(map,
+            "https://raw.githubusercontent.com/jgaffuri/tiled-popgrid/main/pub/v1/2021/" + resolution + "/"),
+        { preprocess: (c) => c.p>0 }
+    )
+
+
 
     //define style
     const colors = [
@@ -42,7 +51,7 @@
         //"#FFFFFF"
     ];
     const classNumber = colors.length
-    const style = new gridviz.ShapeColorSizeStyle({
+    const styleRelief = new gridviz.ShapeColorSizeStyle({
         viewScale: cells => d3.extent(cells, c => +c.v),
         color: (c, r, z, vs) => {
             //const min = Math.max(vs[0], seaLevel)
@@ -56,6 +65,18 @@
         }
     })
 
+    const stylePopulation = new gridviz.ShapeColorSizeStyle({
+        viewScale: cells => d3.max(cells, c => +c.p),
+        shape: () => "circle",
+        size: (c, r, z, max) => {
+            let t = c.p / max
+            t = Math.pow(t, 0.2)
+            return r * t * 1.3
+        },
+        color: () => "#333",
+    })
+
+
     let seaLevel = 0
     const styleWater = new gridviz.ShapeColorSizeStyle({
         color: (c, r, z, vs) => {
@@ -68,7 +89,15 @@
         gridviz_eurostat.getEuronymeLabelLayer('EUR', 20)
     )
 
-    map.layers = [new gridviz.GridLayer(dataset, [style, styleWater], { minPixelsPerCell: 1.5 }), labelLayer]
+    map.layers = [
+        // relief
+        new gridviz.GridLayer(datasetRelief, [styleRelief], { minPixelsPerCell: 1.5 }),
+        // population
+        new gridviz.GridLayer(datasetPop, [stylePopulation], { minPixelsPerCell: 3 }),
+        // sea level
+        new gridviz.GridLayer(datasetRelief, [styleWater], { minPixelsPerCell: 1.5 }),
+        labelLayer
+    ]
 
     const slider = document.getElementById('mySlider');
     const label = document.getElementById('sliderValue');
