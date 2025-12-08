@@ -34,7 +34,7 @@ if aggregate:
     print(datetime.now(), "aggregate")
     for resolution in resolutions:
         print(datetime.now(), resolution)
-        output_dem = out_folder+"dem_"+str(resolution) + "m_.tif"
+        output_dem = out_folder+"dem_"+str(resolution) + "m.tif"
         if os.path.exists(output_dem):
             print(datetime.now(), "exists, skip")
             continue
@@ -44,8 +44,9 @@ if set_no_data:
     print(datetime.now(), "set no_data")
     for resolution in resolutions:
         print(datetime.now(), resolution)
-        output_dem = out_folder+"dem_"+str(resolution) + "m_.tif"
-        mask_pixels_with_lambda(output_dem, 1, lambda x: x <= 0)
+        input_dem = out_folder+"dem_"+str(resolution) + "m.tif"
+        output_dem = out_folder+"dem_"+str(resolution) + "m_nodata.tif"
+        mask_pixels_with_lambda(input_dem, output_dem, 1, lambda x: x <= 0)
 
 
 if tiling:
@@ -63,7 +64,7 @@ if tiling:
 
         # prepare dict for geotiff bands
         dict = {}
-        dict["v"] = {"file":out_folder+"dem_"+str(resolution) + "m_.tif", "band":1, "no_data_values": [0, None, -9999]}
+        dict["v"] = {"file":out_folder+"dem_"+str(resolution) + "m_nodata.tif", "band":1, "no_data_values": [0, None, -9999]}
 
         # launch tiling
         gridtiler_raster.tiling_raster(
