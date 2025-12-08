@@ -1,7 +1,7 @@
 <label for="mySlider">Sea level: <span id="sliderValue"></span></label>
 <br>
 <input type="range" id="mySlider" min="0" max="2500" step="1" value="0" style="width:300px;">
-<div id="map" style="height: 800px; width: 1200px"></div>
+<div id="map" style="height: 700px; width: 1000px"></div>
 
 <script src="https://cdn.jsdelivr.net/npm/gridviz@3.0.26"></script>
 <script src="https://cdn.jsdelivr.net/npm/gridviz-eurostat@2.1.1"></script>
@@ -142,7 +142,9 @@
 
     map.layers = [
         // relief
-        new gridviz.GridLayer(datasetRelief, [styleRelief, shadingStyle], { minPixelsPerCell: 1.6 }),
+        new gridviz.GridLayer(datasetRelief, [styleRelief], { minPixelsPerCell: 1.5 }),
+        //relief shading
+        new gridviz.GridLayer(datasetRelief, [shadingStyle], { minPixelsPerCell: 2.5 }),
         // CLC waters
         new gridviz.GridLayer(datasetCLC, [styleCLCWater], { minPixelsPerCell: 1.8 }),
         // population
