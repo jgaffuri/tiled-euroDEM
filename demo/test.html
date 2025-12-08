@@ -9,7 +9,7 @@
 <script src="https://cdn.jsdelivr.net/npm/d3-scale-chromatic@3"></script>
 <script>
 
-    const map = new gridviz.Map(document.getElementById('map'), { x: 3500000, y: 2900000, z: 400 })
+    const map = new gridviz.Map(document.getElementById('map'), { x: 3500000, y: 2900000, z: 4000 })
         .addZoomButtons()
 
     const dataset = new gridviz.MultiResolutionDataset(
@@ -20,7 +20,6 @@
     )
 
     //define style
-    const classNumber = 12
     const colors = [
         "#004529",
         "#006837",
@@ -33,15 +32,26 @@
         "#F46D43",
         "#D73027",
         "#A50026",
-        "#FFFFFF"
+        //"#FFFFFF"
     ];
+    const classNumber = colors.length
     const style = new gridviz.ShapeColorSizeStyle({
         viewScale: cells => d3.extent(cells, c=> +c.v),
         color: (c, r, z, vs) => {
             let t = (c.v - vs[0]) / (vs[1] - vs[0])
+            t = Math.pow(t, 0.5)
+            //let t = c.v / 3000
             t = Math.floor(t*classNumber)
             if(t>11) t = 11
             return colors[t]
+        }
+    })
+
+    let seaLevel = 300
+    const styleWater = new gridviz.ShapeColorSizeStyle({
+        color: (c, r, z, vs) => {
+            if(c.v > seaLevel) return
+            return "lightblue"
         }
     })
 
@@ -49,6 +59,6 @@
         gridviz_eurostat.getEuronymeLabelLayer('EUR', 20)
     )
 
-    map.layers = [new gridviz.GridLayer(dataset, [style], { minPixelsPerCell: 1 }), labelLayer]
+    map.layers = [new gridviz.GridLayer(dataset, [style, styleWater], { minPixelsPerCell: 1 }), labelLayer]
 
 </script>
