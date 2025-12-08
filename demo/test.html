@@ -1,0 +1,29 @@
+<div id="map" style="height: 500px; width: 800px"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/gridviz@3.0.26"></script>
+<script src="https://cdn.jsdelivr.net/npm/gridviz-eurostat@2.1.2"></script>
+<script src="https://cdn.jsdelivr.net/npm/gridviz-parquet@1.1.1"></script>
+<script>
+
+    const map = new gridviz.Map(document.getElementById('map'), { x: 3500000, y: 2900000, z: 400 })
+        .addZoomButtons()
+
+    const dataset = new gridviz.MultiResolutionDataset(
+        [200, 500, 1000, 2000, 5000, 10000, 20000],
+        resolution => new gviz_par.TiledParquetGrid(
+            map,
+            "https://raw.githubusercontent.com/jgaffuri/tiled-euroDEM/pub/v1/tiles_"+resolution+"/")
+    )
+
+    const colorFunction = (cell, resolution) => {
+        return "#ffffd4"
+    }
+
+    const style = new gridviz.ShapeColorSizeStyle({ color: colorFunction })
+    const labelLayer = new gridviz.LabelLayer(
+        gridviz_eurostat.getEuronymeLabelLayer('EUR', 20)
+    )
+
+    map.layers = [new gridviz.GridLayer(dataset, [style], { minPixelsPerCell: 1 }), labelLayer]
+
+</script>
