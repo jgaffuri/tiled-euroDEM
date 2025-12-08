@@ -12,23 +12,42 @@
         .addZoomButtons()
 
     const dataset = new gridviz.MultiResolutionDataset(
-        [ 100, 200, 500, 1000, 2000, 5000, 10000, 20000],
-        resolution => new gviz_par.TiledParquetGrid( map,
+        [100, 200, 500, 1000, 2000, 5000, 10000, 20000],
+        resolution => new gviz_par.TiledParquetGrid(map,
             "https://raw.githubusercontent.com/jgaffuri/tiled-euroDEM/main/pub/v1/tiles_" + resolution + "/"),
         { preprocess: (c) => c.v != undefined && c.v > 0 }
     )
 
     //define style
     const classNumber = 12
-    const colors = d3.schemeYlOrRd[classNumber]
+    const colors = [
+        "#004529",
+        "#006837",
+        "#238443",
+        "#41AB5D",
+        "#78C679",
+        "#ADDD8E",
+        "#FEE08B",
+        "#FDAE61",
+        "#F46D43",
+        "#D73027",
+        "#A50026",
+        "#FFFFFF"
+    ];
+    //const colors = d3.schemeYlOrRd[classNumber]
+
     //interpolateCubehelixDefault
     const style = new gridviz.ShapeColorSizeStyle({
-        color: (c, r, z, viewScale) => viewScale(c.v),
-        viewScale: gridviz.viewScaleColorQuantile({
+        /*viewScale: gridviz.viewScaleColorQuantile({
             valueFunction: (c) => +c.v,
             classNumber: classNumber,
             colors: colors,
-        }),
+        }),*/
+        viewScale: cells => d3.extent(cells, c=> +c.v),
+        color: (c, r, z, vs) => {
+            console.log(vs)
+            return "red"
+        }//viewScale(c.v),
     })
 
     const labelLayer = new gridviz.LabelLayer(
