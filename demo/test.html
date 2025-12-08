@@ -3,6 +3,9 @@
 <script src="https://cdn.jsdelivr.net/npm/gridviz@3.0.26"></script>
 <script src="https://cdn.jsdelivr.net/npm/gridviz-eurostat@2.1.1"></script>
 <script src="https://cdn.jsdelivr.net/npm/gridviz-parquet@1.1.1"></script>
+<script src="https://cdn.jsdelivr.net/npm/d3-color@3"></script>
+<script src="https://cdn.jsdelivr.net/npm/d3-interpolate@3"></script>
+<script src="https://cdn.jsdelivr.net/npm/d3-scale-chromatic@3"></script>
 <script>
 
     const map = new gridviz.Map(document.getElementById('map'), { x: 3500000, y: 2900000, z: 400 })
@@ -16,12 +19,18 @@
         { preprocess: (c) => c.v != undefined && c.v > 0 }
     )
 
+    //define style
+    const classNumber = 12
+    const colors = d3.schemeYlOrRd[classNumber]
+    const style = new gridviz.ShapeColorSizeStyle({
+        color: (c, r, z, viewScale) => viewScale(c.v),
+        viewScale: gridviz.viewScaleColorQuantile({
+            valueFunction: (c) => +c.v,
+            classNumber: classNumber,
+            colors: colors,
+        }),
+    })
 
-    const colorFunction = (cell, resolution) => {
-        return "gray"
-    }
-
-    const style = new gridviz.ShapeColorSizeStyle({ color: colorFunction })
     const labelLayer = new gridviz.LabelLayer(
         gridviz_eurostat.getEuronymeLabelLayer('EUR', 20)
     )
