@@ -64,8 +64,8 @@
     const styleRelief = new gridviz.ShapeColorSizeStyle({
         viewScale: cells => d3.extent(cells, c => +c.v),
         color: (c, r, z, vs) => {
-            const min = Math.max(vs[0], seaLevel)
-            //const min = vs[0]
+            //const min = Math.max(vs[0], seaLevel)
+            const min = vs[0]
             let t = (c.v - min) / (vs[1] - min)
             t = Math.pow(t, 0.5)
             //let t = c.v / 3000
@@ -76,11 +76,12 @@
     })
 
 
+    const styleCLCWater = new gridviz.ShapeColorSizeStyle({ color: () => seaColor })
     /*const styleCLCWater = new gridviz.SquareColorCategoryWebGLStyle({
         code: (cell) => "a",
         color: { 'a': seaColor },
     })*/
-    const styleCLCWater = new gridviz.ShapeColorSizeStyle({ color: () => seaColor })
+
 
     const stylePopulation = new gridviz.ShapeColorSizeStyle({
         viewScale: cells => d3.max(cells, c => +c.TOT_P_2021),
@@ -108,13 +109,13 @@
 
     map.layers = [
         // relief
-        new gridviz.GridLayer(datasetRelief, [styleRelief], { minPixelsPerCell: 1.5 }),
+        new gridviz.GridLayer(datasetRelief, [styleRelief], { minPixelsPerCell: 1.6 }),
         // CLC waters
-        new gridviz.GridLayer(datasetCLC, [styleCLCWater], { minPixelsPerCell: 1.5 }),
+        new gridviz.GridLayer(datasetCLC, [styleCLCWater], { minPixelsPerCell: 1.8 }),
         // population
         new gridviz.GridLayer(datasetPop, [stylePopulation], { minPixelsPerCell: 4 }),
         // sea level
-        new gridviz.GridLayer(datasetRelief, [styleWater], { minPixelsPerCell: 1.5 }),
+        new gridviz.GridLayer(datasetRelief, [styleWater], { minPixelsPerCell: 1.8 }),
         labelLayer
     ]
 
