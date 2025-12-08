@@ -21,7 +21,7 @@ aggregate = True
 tiling = True
 
 input_dem = "/home/juju/geodata/gisco/EU_DEM_mosaic_1000K/eudem_dem_3035_europe.tif"
-resolutions = [1000]  #[ 20000, 10000, 5000, 2000, 1000, 500, 200, 100 ] #, 50, 25
+resolutions = [ 20000, 10000, 5000, 2000, 1000, 500, 200, 100 ] #, 50, 25
 def modif_fun(x): return round(x, 1)
 
 
