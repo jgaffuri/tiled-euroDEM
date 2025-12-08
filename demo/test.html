@@ -30,7 +30,7 @@
         [100, 200, 500, 1000, 2000, 5000, 10000, 20000, 50000],
         resolution => new gviz_par.TiledParquetGrid(map,
             "https://raw.githubusercontent.com/jgaffuri/europop100m/main/pub/tiles_parquet/" + resolution + "/"),
-            //"https://raw.githubusercontent.com/jgaffuri/tiled-popgrid/main/pub/v1/2021/" + resolution + "/"),
+        //"https://raw.githubusercontent.com/jgaffuri/tiled-popgrid/main/pub/v1/2021/" + resolution + "/"),
         //{ preprocess: (c) => c.TOT_P_2021 > 0 }
     )
 
@@ -99,9 +99,41 @@
     const styleWater = new gridviz.ShapeColorSizeStyle({
         color: (c, r, z, vs) => {
             if (c.v > seaLevel) return
-            return seaColor + "aa"
+            return seaColor + "bb"
         }
     })
+
+    shadingCoeff = 25
+    function getShadingStyle(field, shadingCoeff) {
+        //define shading style
+        const sideValue = (side) => {
+            if (!side.c1) return 0
+            if (!side.c2) return 0
+            if (!side.c1[field]) return 0
+            if (!side.c2[field]) return 0
+            return +side.c2[field] - side.c1[field]
+        }
+
+        const scale = gridviz.exponentialScale(shadingCoeff)
+        return new gridviz.SideStyle({
+            color: (side, resolution) => {
+                const dz = -sideValue(side) * reliefDirection
+                if (dz == 0) return
+                let coeff = resolution / dz * 0.01
+                coeff = Math.abs(coeff)
+                coeff = coeff > 1 ? 1 : coeff
+                coeff = 1 - coeff
+                coeff = scale(coeff)
+                //coeff = Math.pow(coeff, 5)
+                if ((dz < 0 && side.or === 'h') || (dz > 0 && side.or === 'v'))
+                    return 'rgba(255,255,255,' + coeff + ')'
+                return 'rgba(0,0,0,' + coeff + ')'
+            },
+            width: (side, r, z) => Math.min(2 * z, r / 3),
+        })
+    }
+    const shadingStyle = getShadingStyle('v', shadingCoeff)
+
 
     const labelLayer = new gridviz.LabelLayer(
         gridviz_eurostat.getEuronymeLabelLayer('EUR', 20)
@@ -109,7 +141,7 @@
 
     map.layers = [
         // relief
-        new gridviz.GridLayer(datasetRelief, [styleRelief], { minPixelsPerCell: 1.6 }),
+        new gridviz.GridLayer(datasetRelief, [styleRelief, shadingStyle], { minPixelsPerCell: 1.6 }),
         // CLC waters
         new gridviz.GridLayer(datasetCLC, [styleCLCWater], { minPixelsPerCell: 1.8 }),
         // population
