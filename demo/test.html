@@ -1,7 +1,7 @@
 <div id="map" style="height: 500px; width: 800px"></div>
 
 <script src="https://cdn.jsdelivr.net/npm/gridviz@3.0.26"></script>
-<script src="https://cdn.jsdelivr.net/npm/gridviz-eurostat@2.1.2"></script>
+<script src="https://cdn.jsdelivr.net/npm/gridviz-eurostat@2.1.1"></script>
 <script src="https://cdn.jsdelivr.net/npm/gridviz-parquet@1.1.1"></script>
 <script>
 
@@ -12,8 +12,9 @@
         [200, 500, 1000, 2000, 5000, 10000, 20000],
         resolution => new gviz_par.TiledParquetGrid(
             map,
-            "https://raw.githubusercontent.com/jgaffuri/tiled-euroDEM/pub/v1/tiles_"+resolution+"/")
+            "https://raw.githubusercontent.com/jgaffuri/tiled-euroDEM/main/pub/v1/tiles_" + resolution + "/")
     )
+
 
     const colorFunction = (cell, resolution) => {
         return "#ffffd4"
