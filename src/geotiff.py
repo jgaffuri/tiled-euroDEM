@@ -74,7 +74,7 @@ def resample_geotiff_aligned(input_path, output_path, new_resolution, resampling
 
 
 
-def mask_pixels_with_lambda(geotiff_path, band_number, predicate):
+def mask_pixels_with_lambda_in_place(geotiff_path, band_number, predicate):
     """
     geotiff_path : str
         Path to the input GeoTIFF. The file will be overwritten.
@@ -103,3 +103,54 @@ def mask_pixels_with_lambda(geotiff_path, band_number, predicate):
         # Write the modified band back to file
         ds.write(data, band_number)
 
+
+
+def mask_pixels_with_lambda(
+    input_path,
+    output_path,
+    band_number,
+    predicate
+):
+    """
+    Create a new GeoTIFF where pixels satisfying the boolean predicate
+    on the specified band are set to nodata.
+
+    Parameters
+    ----------
+    input_path : str
+        Path to input GeoTIFF.
+    output_path : str
+        Path where output GeoTIFF will be written.
+    band_number : int
+        1-based index of band to modify.
+    predicate : callable
+        Function or lambda value -> bool returning True for pixels
+        to set to nodata.
+    """
+
+    with rasterio.open(input_path) as src:
+        profile = src.profile.copy()
+
+        # Ensure nodata is defined
+        nodata = src.nodata
+        if nodata is None:
+            raise ValueError("The input raster has no nodata value defined.")
+
+        # Read the full raster (all bands)
+        data = src.read()
+
+    # Apply predicate only to the selected band
+    band = data[band_number - 1]
+
+    # Apply pixel-wise lambda
+    mask = np.vectorize(predicate)(band)
+
+    # Assign nodata
+    band[mask] = nodata
+
+    # Put modified band back
+    data[band_number - 1] = band
+
+    # Write output file
+    with rasterio.open(output_path, "w", **profile) as dst:
+        dst.write(data)
