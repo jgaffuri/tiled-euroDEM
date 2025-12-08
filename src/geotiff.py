@@ -19,7 +19,7 @@ def resample_geotiff_aligned(input_path, output_path, new_resolution, resampling
         new_resolution (float): Desired resolution (pixel size, e.g. in meters).
         resampling (): Resampling method.
     """
-    with rasterio.open(input_path, BIGTIFF='YES' if bigtiff else 'IF_NEEDED') as src:
+    with rasterio.open(input_path, BIGTIFF='YES' if bigtiff else 'NO') as src:
         # Original resolution
         original_res_x = src.transform.a
         original_res_y = -src.transform.e
