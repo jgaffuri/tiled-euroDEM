@@ -8,7 +8,7 @@ from rasterio.features import rasterize
 import numpy as np
 
 
-def resample_geotiff_aligned(input_path, output_path, new_resolution, resampling=Resampling.average, dtype=np.float64):
+def resample_geotiff_aligned(input_path, output_path, new_resolution, resampling=Resampling.average, dtype=np.float64, bigtiff=False):
     """
     Resamples a GeoTIFF to a new resolution (must be a multiple of the original),
     and aligns the origin point to a multiple of the new resolution.
@@ -69,7 +69,8 @@ def resample_geotiff_aligned(input_path, output_path, new_resolution, resampling
                     dst_transform=new_transform,
                     dst_crs=src.crs,
                     resampling=resampling,
-                    dtype=dtype
+                    dtype=dtype,
+                    BIGTIFF='YES' if bigtiff else 'IF_NEEDED'
                 )
 
 

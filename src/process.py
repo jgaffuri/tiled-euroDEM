@@ -10,11 +10,8 @@ from geotiff import resample_geotiff_aligned, mask_pixels_with_lambda
 
 #TODO
 # copy mask_pixels_with_lambda to pysco
-# tile
-# test
-# publish
-# use !
-
+# resample_geotiff_aligned
+# demo
 
 aggregate = True
 #set_no_data = True
@@ -37,7 +34,7 @@ if aggregate:
             print(datetime.now(), resolution, "exists, skip")
             continue
         print(datetime.now(), resolution)
-        resample_geotiff_aligned(input_dem, output_dem, resolution, Resampling.med)
+        resample_geotiff_aligned(input_dem, output_dem, resolution, Resampling.med, bigtiff=True)
 
 '''
 if set_no_data:
