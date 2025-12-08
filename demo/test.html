@@ -1,3 +1,6 @@
+<label for="mySlider">Sea level: <span id="sliderValue"></span></label>
+<br>
+<input type="range" id="mySlider" min="0" max="2500" step="5" value="0" style="width:300px;">
 <div id="map" style="height: 800px; width: 1200px"></div>
 
 <script src="https://cdn.jsdelivr.net/npm/gridviz@3.0.26"></script>
@@ -9,8 +12,12 @@
 <script src="https://cdn.jsdelivr.net/npm/d3-scale-chromatic@3"></script>
 <script>
 
-    const map = new gridviz.Map(document.getElementById('map'), { x: 3500000, y: 2900000, z: 4000 })
-        .addZoomButtons()
+    const seaColor = "#a4c8e1"
+
+    const map = new gridviz.Map(document.getElementById('map'), {
+        x: 4400000, y: 2400000, z: 300,
+        backgroundColor: seaColor
+    }).addZoomButtons()
 
     const dataset = new gridviz.MultiResolutionDataset(
         [100, 200, 500, 1000, 2000, 5000, 10000, 20000],
@@ -36,22 +43,22 @@
     ];
     const classNumber = colors.length
     const style = new gridviz.ShapeColorSizeStyle({
-        viewScale: cells => d3.extent(cells, c=> +c.v),
+        viewScale: cells => d3.extent(cells, c => +c.v),
         color: (c, r, z, vs) => {
             let t = (c.v - vs[0]) / (vs[1] - vs[0])
             t = Math.pow(t, 0.5)
             //let t = c.v / 3000
-            t = Math.floor(t*classNumber)
-            if(t>11) t = 11
+            t = Math.floor(t * classNumber)
+            if (t > 11) t = 11
             return colors[t]
         }
     })
 
-    let seaLevel = 300
+    let seaLevel = 0
     const styleWater = new gridviz.ShapeColorSizeStyle({
         color: (c, r, z, vs) => {
-            if(c.v > seaLevel) return
-            return "lightblue"
+            if (c.v > seaLevel) return
+            return seaColor + "cc"
         }
     })
 
@@ -60,5 +67,17 @@
     )
 
     map.layers = [new gridviz.GridLayer(dataset, [style, styleWater], { minPixelsPerCell: 1 }), labelLayer]
+
+    const slider = document.getElementById('mySlider');
+    const label = document.getElementById('sliderValue');
+
+    function updateSlider() {
+        seaLevel = +slider.value;
+        label.textContent = slider.value + ' m';
+        map.redraw()
+    }
+
+    slider.addEventListener('input', updateSlider);
+    updateSlider();
 
 </script>
