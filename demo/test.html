@@ -1,4 +1,4 @@
-<div id="map" style="height: 500px; width: 800px"></div>
+<div id="map" style="height: 800px; width: 120px"></div>
 
 <script src="https://cdn.jsdelivr.net/npm/gridviz@3.0.26"></script>
 <script src="https://cdn.jsdelivr.net/npm/gridviz-eurostat@2.1.1"></script>
@@ -35,22 +35,14 @@
         "#A50026",
         "#FFFFFF"
     ];
-    //const colors = d3.schemeYlOrRd[classNumber]
-
-    //interpolateCubehelixDefault
     const style = new gridviz.ShapeColorSizeStyle({
-        /*viewScale: gridviz.viewScaleColorQuantile({
-            valueFunction: (c) => +c.v,
-            classNumber: classNumber,
-            colors: colors,
-        }),*/
         viewScale: cells => d3.extent(cells, c=> +c.v),
         color: (c, r, z, vs) => {
             let t = (c.v - vs[0]) / (vs[1] - vs[0])
-            
-            const color = d3.interpolateCubehelixDefault(t)
-            return colors[t*12]
-        }//viewScale(c.v),
+            t = Math.floor(t*classNumber)
+            if(t>11) t = 11
+            return colors[t]
+        }
     })
 
     const labelLayer = new gridviz.LabelLayer(
