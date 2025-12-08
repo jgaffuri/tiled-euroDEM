@@ -1,6 +1,6 @@
 <label for="mySlider">Sea level: <span id="sliderValue"></span></label>
 <br>
-<input type="range" id="mySlider" min="0" max="2500" step="5" value="0" style="width:300px;">
+<input type="range" id="mySlider" min="0" max="2500" step="1" value="0" style="width:300px;">
 <div id="map" style="height: 800px; width: 1200px"></div>
 
 <script src="https://cdn.jsdelivr.net/npm/gridviz@3.0.26"></script>
@@ -45,7 +45,9 @@
     const style = new gridviz.ShapeColorSizeStyle({
         viewScale: cells => d3.extent(cells, c => +c.v),
         color: (c, r, z, vs) => {
-            let t = (c.v - vs[0]) / (vs[1] - vs[0])
+            //const min = Math.max(vs[0], seaLevel)
+            const min = vs[0]
+            let t = (c.v - min) / (vs[1] - min)
             t = Math.pow(t, 0.5)
             //let t = c.v / 3000
             t = Math.floor(t * classNumber)
@@ -66,7 +68,7 @@
         gridviz_eurostat.getEuronymeLabelLayer('EUR', 20)
     )
 
-    map.layers = [new gridviz.GridLayer(dataset, [style, styleWater], { minPixelsPerCell: 1 }), labelLayer]
+    map.layers = [new gridviz.GridLayer(dataset, [style, styleWater], { minPixelsPerCell: 1.5 }), labelLayer]
 
     const slider = document.getElementById('mySlider');
     const label = document.getElementById('sliderValue');
