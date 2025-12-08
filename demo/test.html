@@ -136,10 +136,6 @@
     const shadingStyle = getShadingStyle('v', shadingCoeff)
 
 
-    const labelLayer = new gridviz.LabelLayer(
-        gridviz_eurostat.getEuronymeLabelLayer('EUR', 20)
-    )
-
     map.layers = [
         // relief
         new gridviz.GridLayer(datasetRelief, [styleRelief], { minPixelsPerCell: 1.5 }),
@@ -151,7 +147,8 @@
         new gridviz.GridLayer(datasetPop, [stylePopulation], { minPixelsPerCell: 4 }),
         // sea level
         new gridviz.GridLayer(datasetRelief, [styleWater], { minPixelsPerCell: 1.8 }),
-        labelLayer
+        // labels
+        new gridviz.LabelLayer( gridviz_eurostat.getEuronymeLabelLayer('EUR', 20) )
     ]
 
     const slider = document.getElementById('mySlider');
