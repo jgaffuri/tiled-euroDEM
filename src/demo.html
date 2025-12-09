@@ -1,6 +1,10 @@
+<label for="myCheck"><input type="checkbox" id="myCheck">Show hill shading (slow)</label>
+<br>
+<br>
 <label for="mySlider">Sea level: <span id="sliderValue"></span></label>
 <br>
 <input type="range" id="mySlider" min="0" max="2500" step="1" value="0" style="width:700px;">
+<br>
 <div id="map" style="height: 700px; width: 1000px"></div>
 
 <script src="https://cdn.jsdelivr.net/npm/gridviz@3.0.26"></script>
@@ -94,17 +98,9 @@
         color: () => "#333",
     })
 
-
-    let seaLevel = 0
-    const styleWater = new gridviz.ShapeColorSizeStyle({
-        color: (c, r, z, vs) => {
-            if (c.v > seaLevel) return
-            return seaColor + "bb"
-        }
-    })
-
     shadingCoeff = 25
     reliefDirection = -1
+    //TODO move to gridviz ?
     function getShadingStyle(field, shadingCoeff) {
         //define shading style
         const sideValue = (side) => {
@@ -136,31 +132,46 @@
     const shadingStyle = getShadingStyle('v', shadingCoeff)
 
 
-    map.layers = [
-        // relief
-        new gridviz.GridLayer(datasetRelief, [styleRelief], { minPixelsPerCell: 1.5 }),
-        //relief shading
-        new gridviz.GridLayer(datasetRelief, [shadingStyle], { minPixelsPerCell: 2.5 }),
-        // CLC waters
-        new gridviz.GridLayer(datasetCLC, [styleCLCWater], { minPixelsPerCell: 1.8 }),
-        // population
-        new gridviz.GridLayer(datasetPop, [stylePopulation], { minPixelsPerCell: 4 }),
-        // sea level
-        new gridviz.GridLayer(datasetRelief, [styleWater], { minPixelsPerCell: 1.8 }),
-        // labels
-        new gridviz.LabelLayer( gridviz_eurostat.getEuronymeLabelLayer('EUR', 20) )
-    ]
+    const labelLayer = new gridviz.LabelLayer(gridviz_eurostat.getEuronymeLabelLayer('EUR', 20))
+
 
     const slider = document.getElementById('mySlider');
     const label = document.getElementById('sliderValue');
+    const checkbox = document.getElementById("myCheck");
 
-    function updateSlider() {
-        seaLevel = +slider.value;
+    function update() {
+        const seaLevel = +slider.value;
         label.textContent = slider.value + ' m';
+
+        const styleWater = new gridviz.ShapeColorSizeStyle({
+            color: (c, r, z, vs) => {
+                if (c.v > seaLevel) return
+                return seaColor + "bb"
+            }
+        })
+
+        const layers = []
+        // relief
+        layers.push(new gridviz.GridLayer(datasetRelief, [styleRelief], { minPixelsPerCell: 1.5 }))
+        //relief shading
+        if (checkbox.checked) layers.push(new gridviz.GridLayer(datasetRelief, [shadingStyle], { minPixelsPerCell: 2.5 }))
+        // CLC waters
+        layers.push(new gridviz.GridLayer(datasetCLC, [styleCLCWater], { minPixelsPerCell: 1.8 }))
+        // population
+        layers.push(new gridviz.GridLayer(datasetPop, [stylePopulation], { minPixelsPerCell: 4 }))
+        // sea level
+        layers.push(new gridviz.GridLayer(datasetRelief, [styleWater], { minPixelsPerCell: 1.8 }))
+        // labels
+        layers.push(labelLayer)
+        map.layers = layers
+
         map.redraw()
     }
 
-    slider.addEventListener('input', updateSlider);
-    updateSlider();
+    // sea level GUI
+    slider.addEventListener('input', update);
+    // hill shading GUI
+    checkbox.addEventListener("change", update);
 
+    update()
 </script>
