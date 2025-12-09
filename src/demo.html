@@ -5,6 +5,7 @@
 <br>
 <input type="range" id="mySlider" min="0" max="2500" step="1" value="0" style="width:700px;">
 <br>
+<label for="hypssea"><input type="checkbox" id="hypssea">Adjust hypsometric colors to sea level</label>
 <div id="map" style="height: 700px; width: 1000px"></div>
 
 <script src="https://cdn.jsdelivr.net/npm/gridviz@3.0.26"></script>
@@ -46,9 +47,6 @@
     )
 
 
-
-
-
     //define style
     const colors = [
         "#004529",
@@ -65,19 +63,6 @@
         //"#FFFFFF"
     ];
     const classNumber = colors.length
-    const styleRelief = new gridviz.ShapeColorSizeStyle({
-        viewScale: cells => d3.extent(cells, c => +c.v),
-        color: (c, r, z, vs) => {
-            //const min = Math.max(vs[0], seaLevel)
-            const min = vs[0]
-            let t = (c.v - min) / (vs[1] - min)
-            t = Math.pow(t, 0.5)
-            //let t = c.v / 3000
-            t = Math.floor(t * classNumber)
-            if (t > 11) t = 11
-            return colors[t]
-        }
-    })
 
 
     const styleCLCWater = new gridviz.ShapeColorSizeStyle({ color: () => seaColor })
@@ -138,6 +123,7 @@
     const slider = document.getElementById('mySlider');
     const label = document.getElementById('sliderValue');
     const checkbox = document.getElementById("myCheck");
+    const hypssea = document.getElementById("hypssea");
 
     function update() {
         const seaLevel = +slider.value;
@@ -147,6 +133,20 @@
             color: (c, r, z, vs) => {
                 if (c.v > seaLevel) return
                 return seaColor + "bb"
+            }
+        })
+
+        const adj = hypssea.checked
+        const styleRelief = new gridviz.ShapeColorSizeStyle({
+            viewScale: cells => d3.extent(cells, c => +c.v),
+            color: (c, r, z, vs) => {
+                const min = adj? Math.max(vs[0], seaLevel) : vs[0]
+                let t = (c.v - min) / (vs[1] - min)
+                t = Math.pow(t, 0.5)
+                //let t = c.v / 3000
+                t = Math.floor(t * classNumber)
+                if (t > 11) t = 11
+                return colors[t]
             }
         })
 
@@ -172,6 +172,7 @@
     slider.addEventListener('input', update);
     // hill shading GUI
     checkbox.addEventListener("change", update);
+    hypssea.addEventListener("change", update);
 
     update()
 </script>
