@@ -164,15 +164,15 @@
 
         const layers = []
         // relief
-        if (cbRelief.checked) layers.push(new gridviz.GridLayer(datasetRelief, [styleRelief], { minPixelsPerCell: 1.5 }))
+        if (cbRelief.checked) layers.push(new gridviz.GridLayer(datasetRelief, [styleRelief], { minPixelsPerCell: 1.6 }))
         //relief shading
-        if (cbHillshading.checked) layers.push(new gridviz.GridLayer(datasetRelief, [shadingStyle], { minPixelsPerCell: 2.5 }))
+        if (cbHillshading.checked) layers.push(new gridviz.GridLayer(datasetRelief, [shadingStyle], { minPixelsPerCell: 1.6 }))
         // CLC waters
-        if (cbCLC.checked) layers.push(new gridviz.GridLayer(datasetCLC, [styleCLCWater], { minPixelsPerCell: 1.8 }))
+        if (cbCLC.checked) layers.push(new gridviz.GridLayer(datasetCLC, [styleCLCWater], { minPixelsPerCell: 1.6 }))
         // population
         if (cbPopulation.checked) layers.push(new gridviz.GridLayer(datasetPop, [stylePopulation], { minPixelsPerCell: 4 }))
         // sea level
-        layers.push(new gridviz.GridLayer(datasetRelief, [styleWater], { minPixelsPerCell: 1.8 }))
+        layers.push(new gridviz.GridLayer(datasetRelief, [styleWater], { minPixelsPerCell: 1.6 }))
         // labels
         if (cbLabels.checked) layers.push(labelLayer)
         map.layers = layers
