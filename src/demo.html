@@ -29,13 +29,14 @@
 
 
 //TODO
-//population: fix !
+//fix flooded areas in NL, etc.
+//limit zoom
 //tooltip
 //improve menu
 //change hypsometric colors
 //improve hill shading
-//fix flooded areas in NL, etc.
-//webgl
+//test/improve webgl
+//add some rivers ?
 
 
     const seaColor = "#a4c8e1"
@@ -137,7 +138,7 @@
 
 
     const labelLayer = new gridviz.LabelLayer(gridviz_eurostat.getEuronymeLabelLayer('EUR', 20))
-    const boundariesLayer = new gridviz.GeoJSONLayer(gridviz_eurostat.getEurostatBoundariesLayer( { col:"#444" } ))
+    const boundariesLayer = new gridviz.GeoJSONLayer(gridviz_eurostat.getEurostatBoundariesLayer( { col:"#444", scale:"03M" } ))
 
     const cbHillshading = document.getElementById("cbHillshading");
     const cbRelief = document.getElementById("cbRelief");
