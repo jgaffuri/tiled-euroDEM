@@ -8,6 +8,8 @@
 <br>
 <label for="cbLabels"><input type="checkbox" id="cbLabels" checked>City names</label>
 <br>
+<label for="cbBoundaries"><input type="checkbox" id="cbBoundaries" checked>Boundaries</label>
+<br>
 <label for="sSeaLavel">Sea level: <span id="sliderValue"></span></label>
 <br>
 <input type="range" id="sSeaLavel" min="0" max="1200" step="1" value="0" style="width:1000px;">
@@ -28,8 +30,10 @@
 
 //TODO
 //add boundaries
+//see boundaries multilinestring and fix - compare 2021/2024. 2024 as default? colors - simplify?
 //improve menu
 //change hypsometric colors
+//improve hill shading
 //fix flooded areas in NL, etc.
 //webgl
 
@@ -52,8 +56,6 @@
         [100, 200, 500, 1000, 2000, 5000, 10000, 20000, 50000],
         resolution => new gviz_par.TiledParquetGrid(map,
             "https://raw.githubusercontent.com/jgaffuri/europop100m/main/pub/tiles_parquet/" + resolution + "/"),
-        //"https://raw.githubusercontent.com/jgaffuri/tiled-popgrid/main/pub/v1/2021/" + resolution + "/"),
-        //{ preprocess: (c) => c.TOT_P_2021 > 0 }
     )
 
     const datasetCLC = new gridviz.MultiResolutionDataset(
@@ -135,13 +137,14 @@
 
 
     const labelLayer = new gridviz.LabelLayer(gridviz_eurostat.getEuronymeLabelLayer('EUR', 20))
-
+    const boundariesLayer = new gridviz.GeoJSONLayer(gridviz_eurostat.getEurostatBoundariesLayer( { nutsYear: 2021, col:"#444" } ))
 
     const cbHillshading = document.getElementById("cbHillshading");
     const cbRelief = document.getElementById("cbRelief");
     const cbCLC = document.getElementById("cbCLC");
     const cbPopulation = document.getElementById("cbPopulation");
     const cbLabels = document.getElementById("cbLabels");
+    const cbBoundaries = document.getElementById("cbBoundaries");
 
     const sSeaLavel = document.getElementById('sSeaLavel');
     const lbSeaLevel = document.getElementById('sliderValue');
@@ -181,6 +184,8 @@
         if (cbCLC.checked) layers.push(new gridviz.GridLayer(datasetCLC, [styleCLCWater], { minPixelsPerCell: 1.6 }))
         // population
         if (cbPopulation.checked) layers.push(new gridviz.GridLayer(datasetPop, [stylePopulation], { minPixelsPerCell: 4 }))
+        //boundaries
+        if (cbBoundaries.checked) layers.push(boundariesLayer);
         // sea level
         layers.push(new gridviz.GridLayer(datasetRelief, [styleWater], { minPixelsPerCell: 1.6 }))
         // labels
@@ -198,6 +203,7 @@
     cbCLC.addEventListener("change", update);
     cbPopulation.addEventListener("change", update);
     cbLabels.addEventListener("change", update);
+    cbBoundaries.addEventListener("change", update);
     cbHypssea.addEventListener("change", update);
 
     update()
