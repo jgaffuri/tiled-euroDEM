@@ -17,7 +17,7 @@
 <label for="cbHypssea"><input type="checkbox" id="cbHypssea">Adjust hypsometric colors to sea level</label>
 <div id="map" style="height: 700px; width: 1000px"></div>
 
-<script src="https://cdn.jsdelivr.net/npm/gridviz@3.0.26"></script>
+<script src="https://cdn.jsdelivr.net/npm/gridviz@3.0.27"></script>
 <script src="https://cdn.jsdelivr.net/npm/gridviz-eurostat@2.1.1"></script>
 <script src="https://cdn.jsdelivr.net/npm/gridviz-parquet@1.1.1"></script>
 <script src="https://cdn.jsdelivr.net/npm/d3-array@3.2.4"></script>
@@ -29,8 +29,9 @@
 
 
 //TODO
+//population: fix !
 //add boundaries
-//see boundaries multilinestring and fix - compare 2021/2024. 2024 as default? colors - simplify?
+//boundaries: 2024 as default? colors - simplify?
 //improve menu
 //change hypsometric colors
 //improve hill shading
@@ -137,7 +138,7 @@
 
 
     const labelLayer = new gridviz.LabelLayer(gridviz_eurostat.getEuronymeLabelLayer('EUR', 20))
-    const boundariesLayer = new gridviz.GeoJSONLayer(gridviz_eurostat.getEurostatBoundariesLayer( { nutsYear: 2021, col:"#444" } ))
+    const boundariesLayer = new gridviz.GeoJSONLayer(gridviz_eurostat.getEurostatBoundariesLayer( { nutsYear: 2024, col:"#444" } ))
 
     const cbHillshading = document.getElementById("cbHillshading");
     const cbRelief = document.getElementById("cbRelief");
