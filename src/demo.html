@@ -18,7 +18,7 @@
 <div id="map" style="height: 700px; width: 1000px"></div>
 
 <script src="https://cdn.jsdelivr.net/npm/gridviz@3.0.27"></script>
-<script src="https://cdn.jsdelivr.net/npm/gridviz-eurostat@2.1.1"></script>
+<script src="https://cdn.jsdelivr.net/npm/gridviz-eurostat@2.2.2"></script>
 <script src="https://cdn.jsdelivr.net/npm/gridviz-parquet@1.1.1"></script>
 <script src="https://cdn.jsdelivr.net/npm/d3-array@3.2.4"></script>
 <script src="https://cdn.jsdelivr.net/npm/d3-color@3"></script>
@@ -30,7 +30,7 @@
 
 //TODO
 //population: fix !
-//boundaries: 2024 as default? colors - simplify?
+//tooltip
 //improve menu
 //change hypsometric colors
 //improve hill shading
@@ -55,7 +55,7 @@
     const datasetPop = new gridviz.MultiResolutionDataset(
         [100, 200, 500, 1000, 2000, 5000, 10000, 20000, 50000],
         resolution => new gviz_par.TiledParquetGrid(map,
-            "https://raw.githubusercontent.com/jgaffuri/europop100m/main/pub/tiles_parquet/" + resolution + "/"),
+            "https://raw.githubusercontent.com/jgaffuri/europop100m/main/pub/JRC_100m/" + resolution + "/"),
     )
 
     const datasetCLC = new gridviz.MultiResolutionDataset(
@@ -92,12 +92,12 @@
 
 
     const stylePopulation = new gridviz.ShapeColorSizeStyle({
-        viewScale: cells => d3.max(cells, c => +c.TOT_P_2021),
+        viewScale: cells => d3.max(cells, c => +c.POP_2021),
         shape: () => "circle",
         size: (c, r, z, max) => {
-            let t = c.TOT_P_2021 / max
-            t = Math.pow(t, 0.4)
-            return r * t * 1.3
+            let t = +c.POP_2021 / max
+            t = Math.pow(t, 0.6)
+            return r * t * 1.4
         },
         color: () => "white", //"#333",
     })
@@ -137,7 +137,7 @@
 
 
     const labelLayer = new gridviz.LabelLayer(gridviz_eurostat.getEuronymeLabelLayer('EUR', 20))
-    const boundariesLayer = new gridviz.GeoJSONLayer(gridviz_eurostat.getEurostatBoundariesLayer( { nutsYear: 2024, col:"#444" } ))
+    const boundariesLayer = new gridviz.GeoJSONLayer(gridviz_eurostat.getEurostatBoundariesLayer( { col:"#444" } ))
 
     const cbHillshading = document.getElementById("cbHillshading");
     const cbRelief = document.getElementById("cbRelief");
