@@ -10,7 +10,8 @@
 <br>
 <label for="cbBoundaries"><input type="checkbox" id="cbBoundaries" checked>Boundaries</label>
 <br>
-<label for="sSeaLavel"><input type="checkbox" id="cbSeaLevel" checked>Sea level: <span id="sliderValue"></span></label>
+<label for="sSeaLavel"><input type="checkbox" id="cbSeaLevel" checked>Sea level rise: <span
+        id="sliderValue"></span></label>
 <input type="range" id="sSeaLavel" min="0" max="80" step="1" value="0" style="width:300px;">
 <br>
 <label for="cbHypssea"><input type="checkbox" id="cbHypssea">Adjust hypsometric colors to sea level</label>
@@ -28,7 +29,7 @@
 
 
     //TODO
-    //improve hill shading
+    //extract hill shading and reuse with accessibility map
     //fix flooded areas in NL, etc. correct tiles - include <=0 cells. integrate with GEBCO ?
     //DEM 50m ?
     //improve menu
@@ -41,7 +42,8 @@
     const map = new gridviz.Map(document.getElementById('map'), {
         x: 4200000, y: 2800000, z: 1000,
         backgroundColor: seaColor
-    }).setZoomExtent([30, 4000])
+    })
+        //.setZoomExtent([30, 4000])
         .addZoomButtons()
 
     const datasetRelief = new gridviz.MultiResolutionDataset(
@@ -67,7 +69,7 @@
 
     //define style
     const colors = []
-    for (let i = 0; i <= 1; i += 0.08) colors.push(d3.interpolateRdYlGn(1-i))
+    for (let i = 0; i <= 1; i += 0.08) colors.push(d3.interpolateRdYlGn(1 - i))
     const classNumber = colors.length
 
 
@@ -92,38 +94,35 @@
         color: () => "#444", //"#333",
     })
 
-    shadingCoeff = 25
-    reliefDirection = -1
+
     //TODO move to gridviz ?
-    function getShadingStyle(field, shadingCoeff) {
-        //define shading style
+    function getShadingStyle(field, exageration = 1, reliefDirection = 1) {
+        // compute side value as elevation difference and attach to side
         const sideValue = (side) => {
-            if (!side.c1) return 0
-            if (!side.c2) return 0
-            if (!side.c1[field]) return 0
-            if (!side.c2[field]) return 0
-            return +side.c2[field] - side.c1[field]
+            if (!side.c1) side.v = 0
+            else if (!side.c2) side.v = 0
+            else if (!side.c1[field]) side.v = 0
+            else if (!side.c2[field]) side.v = 0
+            else side.v = +side.c2[field] - side.c1[field]
+            return side.v
         }
 
-        const scale = gridviz.exponentialScale(shadingCoeff)
+        const scale = gridviz.exponentialScale(-exageration)
         return new gridviz.SideStyle({
-            color: (side, resolution) => {
-                const dz = -sideValue(side) * reliefDirection
-                if (dz == 0) return
-                let coeff = resolution / dz * 0.01
-                coeff = Math.abs(coeff)
-                coeff = coeff > 1 ? 1 : coeff
-                coeff = 1 - coeff
+            // return max side value for normalisation
+            viewScale: sides => d3.max(sides, s => sideValue(s)),
+            color: (side, resolution, z, max) => {
+                if (side.v == 0) return
+                let coeff = Math.abs(side.v / max)
                 coeff = scale(coeff)
-                //coeff = Math.pow(coeff, 5)
-                if ((dz < 0 && side.or === 'h') || (dz > 0 && side.or === 'v'))
+                if ((side.v * reliefDirection < 0 && side.or === 'h') || (side.v * reliefDirection > 0 && side.or === 'v'))
                     return 'rgba(255,255,255,' + coeff + ')'
                 return 'rgba(0,0,0,' + coeff + ')'
             },
             width: (side, r, z) => Math.min(2 * z, r / 3),
         })
     }
-    const shadingStyle = getShadingStyle('v', shadingCoeff)
+    const shadingStyle = getShadingStyle('v', 2)
 
 
     const labelLayer = new gridviz.LabelLayer(gridviz_eurostat.getEuronymeLabelLayer('EUR', 20))
@@ -167,7 +166,7 @@
                 //t = Math.pow(t, 0.6)
                 t = scaleRelief(t)
                 t = Math.floor(t * classNumber)
-                if (t >= classNumber) t = classNumber-1
+                if (t >= classNumber) t = classNumber - 1
                 return colors[t]
             },
             size: (c, r) => r * 1.1
