@@ -10,9 +10,8 @@
 <br>
 <label for="cbBoundaries"><input type="checkbox" id="cbBoundaries" checked>Boundaries</label>
 <br>
-<label for="sSeaLavel">Sea level: <span id="sliderValue"></span></label>
-<br>
-<input type="range" id="sSeaLavel" min="0" max="1200" step="1" value="0" style="width:1000px;">
+<label for="sSeaLavel"><input type="checkbox" id="cbSeaLevel" checked>Sea level: <span id="sliderValue"></span></label>
+<input type="range" id="sSeaLavel" min="0" max="80" step="1" value="0" style="width:300px;">
 <br>
 <label for="cbHypssea"><input type="checkbox" id="cbHypssea">Adjust hypsometric colors to sea level</label>
 <div id="map" style="height: 700px; width: 1000px"></div>
@@ -150,6 +149,7 @@
     const cbPopulation = document.getElementById("cbPopulation");
     const cbLabels = document.getElementById("cbLabels");
     const cbBoundaries = document.getElementById("cbBoundaries");
+    const cbSeaLevel = document.getElementById("cbSeaLevel");
 
     const sSeaLavel = document.getElementById('sSeaLavel');
     const lbSeaLevel = document.getElementById('sliderValue');
@@ -193,7 +193,7 @@
         //boundaries
         if (cbBoundaries.checked) layers.push(boundariesLayer);
         // sea level
-        layers.push(new gridviz.GridLayer(datasetRelief, [styleWater], { minPixelsPerCell: 1.6, cellInfoHTML: 'none' }))
+        if (cbSeaLevel.checked) layers.push(new gridviz.GridLayer(datasetRelief, [styleWater], { minPixelsPerCell: 1.6, cellInfoHTML: 'none' }))
         // labels
         if (cbLabels.checked) layers.push(labelLayer)
         map.layers = layers
@@ -210,6 +210,7 @@
     cbPopulation.addEventListener("change", update);
     cbLabels.addEventListener("change", update);
     cbBoundaries.addEventListener("change", update);
+    cbSeaLevel.addEventListener("change", update);
     cbHypssea.addEventListener("change", update);
 
     update()
