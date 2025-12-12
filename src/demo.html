@@ -28,15 +28,15 @@
 
 
 
-//TODO
-//fix flooded areas in NL, etc.
-//tooltip
-//improve menu
-//change hypsometric colors
-//improve hill shading
-//test/improve webgl
-//add some rivers ?
-//DEM 50m ?
+    //TODO
+    //tooltip
+    //fix flooded areas in NL, etc.
+    //DEM 50m ?
+    //improve menu
+    //change hypsometric colors
+    //improve hill shading
+    //test/improve webgl
+    //add some rivers ?
 
 
     const seaColor = "#a4c8e1"
@@ -45,7 +45,7 @@
         x: 4200000, y: 2800000, z: 1000,
         backgroundColor: seaColor
     }).setZoomExtent([30, 4000])
-    .addZoomButtons()
+        .addZoomButtons()
 
     const datasetRelief = new gridviz.MultiResolutionDataset(
         [100, 200, 500, 1000, 2000, 5000, 10000, 20000],
@@ -139,7 +139,11 @@
 
 
     const labelLayer = new gridviz.LabelLayer(gridviz_eurostat.getEuronymeLabelLayer('EUR', 20))
-    const boundariesLayer = new gridviz.GeoJSONLayer(gridviz_eurostat.getEurostatBoundariesLayer( { col:"#444", scale:"03M" } ))
+    const boundariesLayer = new gridviz.GeoJSONLayer(gridviz_eurostat.getEurostatBoundariesLayer({ col: "#444", scale: "03M" }))
+
+    // tooltip content
+    const cellInfoHTMLPop = (c) => `Population: ${c.POP_2021}`
+    const cellInfoHTMLRelief = (c) => `Elevation: ${c.v}`
 
     const cbHillshading = document.getElementById("cbHillshading");
     const cbRelief = document.getElementById("cbRelief");
@@ -167,7 +171,7 @@
         const styleRelief = new gridviz.ShapeColorSizeStyle({
             viewScale: cells => d3.extent(cells, c => +c.v),
             color: (c, r, z, vs) => {
-                const min = adj? Math.max(vs[0], seaLevel) : vs[0]
+                const min = adj ? Math.max(vs[0], seaLevel) : vs[0]
                 let t = (c.v - min) / (vs[1] - min)
                 t = Math.pow(t, 0.5)
                 //let t = c.v / 3000
@@ -177,19 +181,20 @@
             }
         })
 
+
         const layers = []
         // relief
-        if (cbRelief.checked) layers.push(new gridviz.GridLayer(datasetRelief, [styleRelief], { minPixelsPerCell: 1.6 }))
+        if (cbRelief.checked) layers.push(new gridviz.GridLayer(datasetRelief, [styleRelief], { minPixelsPerCell: 1.6, cellInfoHTML: cellInfoHTMLRelief  }))
         //relief shading
-        if (cbHillshading.checked) layers.push(new gridviz.GridLayer(datasetRelief, [shadingStyle], { minPixelsPerCell: 1.6 }))
+        if (cbHillshading.checked) layers.push(new gridviz.GridLayer(datasetRelief, [shadingStyle], { minPixelsPerCell: 1.6, cellInfoHTML: 'none' }))
         // CLC waters
-        if (cbCLC.checked) layers.push(new gridviz.GridLayer(datasetCLC, [styleCLCWater], { minPixelsPerCell: 1.6 }))
+        if (cbCLC.checked) layers.push(new gridviz.GridLayer(datasetCLC, [styleCLCWater], { minPixelsPerCell: 1.6, cellInfoHTML: 'none' }))
         // population
-        if (cbPopulation.checked) layers.push(new gridviz.GridLayer(datasetPop, [stylePopulation], { minPixelsPerCell: 4 }))
+        if (cbPopulation.checked) layers.push(new gridviz.GridLayer(datasetPop, [stylePopulation], { minPixelsPerCell: 4, cellInfoHTML: cellInfoHTMLPop }))
         //boundaries
         if (cbBoundaries.checked) layers.push(boundariesLayer);
         // sea level
-        layers.push(new gridviz.GridLayer(datasetRelief, [styleWater], { minPixelsPerCell: 1.6 }))
+        layers.push(new gridviz.GridLayer(datasetRelief, [styleWater], { minPixelsPerCell: 1.6, cellInfoHTML: 'none' }))
         // labels
         if (cbLabels.checked) layers.push(labelLayer)
         map.layers = layers
