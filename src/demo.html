@@ -28,11 +28,10 @@
 
 
     //TODO
+    //improve hill shading
     //fix flooded areas in NL, etc. correct tiles - include <=0 cells. integrate with GEBCO ?
     //DEM 50m ?
     //improve menu
-    //change hypsometric colors
-    //improve hill shading
     //test/improve webgl
     //add some rivers ?
 
@@ -67,32 +66,8 @@
 
 
     //define style
-    /*const colors = [
-        /*"#B3C19D",
-        "#DAD9B4",
-        "#E7DCAF",
-        "#D0BC9E",
-        "#D2B9A1",
-        "#BD8078",
-        "#C27873",
-        "#B55E5D",
-        "#935857",
-        //"#E5DDC8"
-        //"#004529",
-                "#006837",
-                "#238443",
-                "#41AB5D",
-                "#78C679",
-                "#ADDD8E",
-                "#FEE08B",
-                "#FDAE61",
-                "#F46D43",
-                "#D73027",
-                "#A50026",
-                //"#FFFFFF"
-    ];*/
-    const colors = d3.schemeRdYlGn[11].slice().reverse()
-    //interpolateCubehelixDefault
+    const colors = []
+    for (let i = 0; i <= 1; i += 0.08) colors.push(d3.interpolateRdYlGn(1-i))
     const classNumber = colors.length
 
 
@@ -192,7 +167,7 @@
                 //t = Math.pow(t, 0.6)
                 t = scaleRelief(t)
                 t = Math.floor(t * classNumber)
-                if (t > 11) t = 11
+                if (t >= classNumber) t = classNumber-1
                 return colors[t]
             },
             size: (c, r) => r * 1.1
