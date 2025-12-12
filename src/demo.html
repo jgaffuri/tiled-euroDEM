@@ -68,7 +68,7 @@
 
     //define style
     const colors = [
-        "#004529",
+        //"#004529",
         "#006837",
         "#238443",
         "#41AB5D",
@@ -91,15 +91,18 @@
     })*/
 
 
+    const scalePopulation = gridviz.logarithmicScale(-3)
     const stylePopulation = new gridviz.ShapeColorSizeStyle({
         viewScale: cells => d3.max(cells, c => +c.POP_2021),
         shape: () => "circle",
         size: (c, r, z, max) => {
             let t = +c.POP_2021 / max
-            t = Math.pow(t, 0.6)
-            return r * t * 1.4
+            //t = Math.pow(t, 0.6)
+            t = scalePopulation(t)
+            t = r * t * 1.4
+            if (t / z > 3) return t
         },
-        color: () => "white", //"#333",
+        color: () => "#444", //"#333",
     })
 
     shadingCoeff = 25
@@ -167,23 +170,26 @@
         })
 
         const adj = cbHypssea.checked
+        //const scaleRelief = gridviz.exponentialScale(-2)
+        const scaleRelief = gridviz.logarithmicScale(-2)
         const styleRelief = new gridviz.ShapeColorSizeStyle({
             viewScale: cells => d3.extent(cells, c => +c.v),
             color: (c, r, z, vs) => {
                 const min = adj ? Math.max(vs[0], seaLevel) : vs[0]
                 let t = (c.v - min) / (vs[1] - min)
-                t = Math.pow(t, 0.5)
-                //let t = c.v / 3000
+                //t = Math.pow(t, 0.6)
+                t = scaleRelief(t)
                 t = Math.floor(t * classNumber)
                 if (t > 11) t = 11
                 return colors[t]
-            }
+            },
+            size: (c, r) => r * 1.1
         })
 
 
         const layers = []
         // relief
-        if (cbRelief.checked) layers.push(new gridviz.GridLayer(datasetRelief, [styleRelief], { minPixelsPerCell: 1.6, cellInfoHTML: cellInfoHTMLRelief  }))
+        if (cbRelief.checked) layers.push(new gridviz.GridLayer(datasetRelief, [styleRelief], { minPixelsPerCell: 1.6, cellInfoHTML: cellInfoHTMLRelief }))
         //relief shading
         if (cbHillshading.checked) layers.push(new gridviz.GridLayer(datasetRelief, [shadingStyle], { minPixelsPerCell: 1.6, cellInfoHTML: 'none' }))
         // CLC waters
