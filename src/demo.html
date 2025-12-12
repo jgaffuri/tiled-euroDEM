@@ -30,7 +30,6 @@
 
 //TODO
 //fix flooded areas in NL, etc.
-//limit zoom
 //tooltip
 //improve menu
 //change hypsometric colors
@@ -45,7 +44,8 @@
     const map = new gridviz.Map(document.getElementById('map'), {
         x: 4200000, y: 2800000, z: 1000,
         backgroundColor: seaColor
-    }).addZoomButtons()
+    }).setZoomExtent([30, 4000])
+    .addZoomButtons()
 
     const datasetRelief = new gridviz.MultiResolutionDataset(
         [100, 200, 500, 1000, 2000, 5000, 10000, 20000],
