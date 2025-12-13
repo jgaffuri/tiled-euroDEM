@@ -57,8 +57,8 @@
 
 
         //TODO
+        //roads: add 13 zoom level
         //points bertin
-        //roads: add and check zoom levels
         //fix flooded areas in NL, etc. correct tiles - include <=0 cells. integrate with GEBCO ?
         //DEM 50m ?
         //test webgl - faster ?
@@ -200,7 +200,7 @@
         const boundariesLayer = new gridviz.GeoJSONLayer(gridviz_eurostat.getEurostatBoundariesLayer({ col: "#cc6699", scale: "03M" }))
         const roadsLayer = new gridviz.BackgroundLayer({
             url: "https://raw.githubusercontent.com/jgaffuri/gridStatBaseMap/main/pub/road/",
-            resolutions: Array.from({ length: 13 }, (_, i) => 114688 / Math.pow(2, i)),
+            resolutions: Array.from({ length: 14 }, (_, i) => 114688 / Math.pow(2, i)),
             origin: [0, 6000000],
             nbPix: 512,
             //visible: (z) => z > 4, //&& z < 2100,
