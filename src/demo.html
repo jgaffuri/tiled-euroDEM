@@ -31,7 +31,7 @@
 
 
     //TODO
-    //roads
+    //roads: add and check zoom levels
     //improve menu
     //fix flooded areas in NL, etc. correct tiles - include <=0 cells. integrate with GEBCO ?
     //DEM 50m ?
@@ -99,7 +99,7 @@
 
 
     //TODO move to gridviz ?
-    function getShadingStyle(field, exageration = 1, reliefDirection = 1) {
+    function getShadingStyle(field, exageration = 1, reliefDirection = 1, diamond = false) {
         // compute side value as elevation difference and attach to side
         const sideValue = (side) => {
             if (!side.c1) side.v = 0
@@ -123,9 +123,10 @@
                 return 'rgba(0,0,0,' + coeff + ')'
             },
             width: (side, r, z) => Math.min(2 * z, r / 3),
+            diamond: diamond,
         })
     }
-    const shadingStyle = getShadingStyle('v', 2)
+    const shadingStyle = getShadingStyle('v', 1, 1, false)
 
     const blendOperation = (z) => 'multiply' //(z < 200 ? 'multiply' : 'source-over')
     //    blendOperation: blendOperation,
