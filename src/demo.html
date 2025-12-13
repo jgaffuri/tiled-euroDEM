@@ -10,6 +10,8 @@
 <br>
 <label for="cbBoundaries"><input type="checkbox" id="cbBoundaries" checked>Boundaries</label>
 <br>
+<label for="cbRoads"><input type="checkbox" id="cbRoads" checked>Roads</label>
+<br>
 <label for="sSeaLavel"><input type="checkbox" id="cbSeaLevel" checked>Sea level rise: <span
         id="sliderValue"></span></label>
 <input type="range" id="sSeaLavel" min="0" max="80" step="1" value="0" style="width:300px;">
@@ -29,12 +31,13 @@
 
 
     //TODO
-    //extract hill shading and reuse with accessibility map
+    //roads
+    //improve menu
     //fix flooded areas in NL, etc. correct tiles - include <=0 cells. integrate with GEBCO ?
     //DEM 50m ?
-    //improve menu
     //test/improve webgl
     //add some rivers ?
+    //extract hill shading and reuse with accessibility map
 
 
     const seaColor = "#a4c8e1"
@@ -91,7 +94,7 @@
             t = r * t * 1.4
             if (t / z > 3) return t
         },
-        color: () => "#444", //"#333",
+        color: () => "#aaa", //"#555",
     })
 
 
@@ -124,9 +127,20 @@
     }
     const shadingStyle = getShadingStyle('v', 2)
 
+    const blendOperation = (z) => 'multiply' //(z < 200 ? 'multiply' : 'source-over')
+    //    blendOperation: blendOperation,
 
     const labelLayer = new gridviz.LabelLayer(gridviz_eurostat.getEuronymeLabelLayer('EUR', 20))
-    const boundariesLayer = new gridviz.GeoJSONLayer(gridviz_eurostat.getEurostatBoundariesLayer({ col: "#444", scale: "03M" }))
+    const boundariesLayer = new gridviz.GeoJSONLayer(gridviz_eurostat.getEurostatBoundariesLayer({ col: "#cc6699", scale: "03M" }))
+    const roadsLayer = new gridviz.BackgroundLayer({
+        url: "https://raw.githubusercontent.com/jgaffuri/gridStatBaseMap/main/pub/road/",
+        resolutions: Array.from({ length: 13 }, (_, i) => 114688 / Math.pow(2, i)),
+        origin: [0, 6000000],
+        nbPix: 512,
+        //visible: (z) => z > 4, //&& z < 2100,
+        pixelationCoefficient: 0.55,
+        blendOperation: blendOperation,
+    })
 
     // tooltip content
     const cellInfoHTMLPop = (c) => `Population: ${c.POP_2021}`
@@ -138,6 +152,7 @@
     const cbPopulation = document.getElementById("cbPopulation");
     const cbLabels = document.getElementById("cbLabels");
     const cbBoundaries = document.getElementById("cbBoundaries");
+    const cbRoads = document.getElementById("cbRoads");
     const cbSeaLevel = document.getElementById("cbSeaLevel");
 
     const sSeaLavel = document.getElementById('sSeaLavel');
@@ -184,6 +199,8 @@
         if (cbPopulation.checked) layers.push(new gridviz.GridLayer(datasetPop, [stylePopulation], { minPixelsPerCell: 4, cellInfoHTML: cellInfoHTMLPop }))
         //boundaries
         if (cbBoundaries.checked) layers.push(boundariesLayer);
+        //roads
+        if (cbRoads.checked) layers.push(roadsLayer);
         // sea level
         if (cbSeaLevel.checked) layers.push(new gridviz.GridLayer(datasetRelief, [styleWater], { minPixelsPerCell: 1.6, cellInfoHTML: 'none' }))
         // labels
@@ -202,6 +219,7 @@
     cbPopulation.addEventListener("change", update);
     cbLabels.addEventListener("change", update);
     cbBoundaries.addEventListener("change", update);
+    cbRoads.addEventListener("change", update);
     cbSeaLevel.addEventListener("change", update);
     cbHypssea.addEventListener("change", update);
 
