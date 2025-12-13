@@ -1,228 +1,258 @@
-<label for="cbHillshading"><input type="checkbox" id="cbHillshading">Relief hillshading (slow)</label>
-<br>
-<label for="cbRelief"><input type="checkbox" id="cbRelief" checked>Relief hypsometric tints</label>
-<br>
-<label for="cbCLC"><input type="checkbox" id="cbCLC" checked>Land cover waters</label>
-<br>
-<label for="cbPopulation"><input type="checkbox" id="cbPopulation" checked>Population dots</label>
-<br>
-<label for="cbLabels"><input type="checkbox" id="cbLabels" checked>City names</label>
-<br>
-<label for="cbBoundaries"><input type="checkbox" id="cbBoundaries" checked>Boundaries</label>
-<br>
-<label for="cbRoads"><input type="checkbox" id="cbRoads" checked>Roads</label>
-<br>
-<label for="sSeaLavel"><input type="checkbox" id="cbSeaLevel" checked>Sea level rise: <span
-        id="sliderValue"></span></label>
-<input type="range" id="sSeaLavel" min="0" max="80" step="1" value="0" style="width:300px;">
-<br>
-<label for="cbHypssea"><input type="checkbox" id="cbHypssea">Adjust hypsometric colors to sea level</label>
-<div id="map" style="height: 700px; width: 1000px"></div>
+<html lang="en" style="height: 100%">
 
-<script src="https://cdn.jsdelivr.net/npm/gridviz@3.0.27"></script>
-<script src="https://cdn.jsdelivr.net/npm/gridviz-eurostat@2.2.2"></script>
-<script src="https://cdn.jsdelivr.net/npm/gridviz-parquet@1.1.1"></script>
-<script src="https://cdn.jsdelivr.net/npm/d3-array@3.2.4"></script>
-<script src="https://cdn.jsdelivr.net/npm/d3-color@3"></script>
-<script src="https://cdn.jsdelivr.net/npm/d3-interpolate@3"></script>
-<script src="https://cdn.jsdelivr.net/npm/d3-scale-chromatic@3"></script>
-<script>
+<head>
+    <meta name="viewport" content="maximum-scale=1.0, user-scalable=no" />
+    <title>Relief in Europe</title>
+</head>
 
+<body style="margin: 0; height: 100%; font-family: Arial, Helvetica, sans-serif; overflow: hidden">
 
+    <div id="map" style="height: 700px; width: 1000px"></div>
 
-    //TODO
-    //roads: add and check zoom levels
-    //improve menu
-    //fix flooded areas in NL, etc. correct tiles - include <=0 cells. integrate with GEBCO ?
-    //DEM 50m ?
-    //test/improve webgl
-    //add some rivers ?
-    //extract hill shading and reuse with accessibility map
+    <div style="
+                font-size: 0.9em;
+                position: absolute;
+                left: 10px;
+                top: 10px;
+                width: auto;
+                height: auto;
+                padding: 5px;
+                border: 0px;
+                border-radius: 5px;
+                background: #ffffffcc;
+                line-height: 1.6;
+                box-shadow: 3px 3px 3px grey, -3px -3px 3px #ddd;
+            ">
+        <label for="cbHillshading"><input type="checkbox" id="cbHillshading">Relief hillshading (slow)</label>
+        <br>
+        <label for="cbRelief"><input type="checkbox" id="cbRelief" checked>Relief hypsometric tints</label>
+        <br>
+        <label for="cbCLC"><input type="checkbox" id="cbCLC" checked>Land cover waters</label>
+        <br>
+        <label for="cbPopulation"><input type="checkbox" id="cbPopulation" checked>Population dots</label>
+        <br>
+        <label for="cbLabels"><input type="checkbox" id="cbLabels" checked>City names</label>
+        <br>
+        <label for="cbBoundaries"><input type="checkbox" id="cbBoundaries" checked>Boundaries</label>
+        <br>
+        <label for="cbRoads"><input type="checkbox" id="cbRoads" checked>Roads</label>
+        <br>
+        <label for="sSeaLavel"><input type="checkbox" id="cbSeaLevel" checked>Sea level rise: <span
+                id="sliderValue"></span></label>
+        <br>
+        <input type="range" id="sSeaLavel" min="0" max="80" step="1" value="0" style="width:200px;">
+        <br>
+        <label for="cbHypssea"><input type="checkbox" id="cbHypssea">Adjust hypsometric colors to sea level</label>
+    </div>
 
-
-    const seaColor = "#a4c8e1"
-
-    const map = new gridviz.Map(document.getElementById('map'), {
-        x: 4200000, y: 2800000, z: 1000,
-        backgroundColor: seaColor
-    })
-        .setZoomExtent([10, 5000])
-        .addZoomButtons()
-
-    const datasetRelief = new gridviz.MultiResolutionDataset(
-        [100, 200, 500, 1000, 2000, 5000, 10000, 20000],
-        resolution => new gviz_par.TiledParquetGrid(map,
-            "https://raw.githubusercontent.com/jgaffuri/tiled-euroDEM/main/pub/v1/tiles_" + resolution + "/"),
-        { preprocess: (c) => c.v != undefined && c.v > 0 }
-    )
-
-    const datasetPop = new gridviz.MultiResolutionDataset(
-        [100, 200, 500, 1000, 2000, 5000, 10000, 20000, 50000],
-        resolution => new gviz_par.TiledParquetGrid(map,
-            "https://raw.githubusercontent.com/jgaffuri/europop100m/main/pub/JRC_100m/" + resolution + "/"),
-    )
-
-    const datasetCLC = new gridviz.MultiResolutionDataset(
-        [100, 200, 500, 1000, 2000, 5000, 10000, 20000, 50000, 100000],
-        (resolution) => new gviz_par.TiledParquetGrid(map,
-            'https://raw.githubusercontent.com/eurostat/LCMap/main/pub/clc/v1/2018/' + resolution + '/'),
-        { preprocess: (c) => c.code == 40 || c.code == 41 || c.code == 42 || c.code == 43 || c.code == 44 }
-    )
+    <script src="https://cdn.jsdelivr.net/npm/gridviz@3.0.27"></script>
+    <script src="https://cdn.jsdelivr.net/npm/gridviz-eurostat@2.2.2"></script>
+    <script src="https://cdn.jsdelivr.net/npm/gridviz-parquet@1.1.1"></script>
+    <script src="https://cdn.jsdelivr.net/npm/d3-array@3.2.4"></script>
+    <script src="https://cdn.jsdelivr.net/npm/d3-color@3"></script>
+    <script src="https://cdn.jsdelivr.net/npm/d3-interpolate@3"></script>
+    <script src="https://cdn.jsdelivr.net/npm/d3-scale-chromatic@3"></script>
+    <script>
 
 
-    //define style
-    const colors = []
-    for (let i = 0; i <= 1; i += 0.08) colors.push(d3.interpolateRdYlGn(1 - i))
-    const classNumber = colors.length
+
+        //TODO
+        //roads: add and check zoom levels
+        //improve menu
+        //fix flooded areas in NL, etc. correct tiles - include <=0 cells. integrate with GEBCO ?
+        //DEM 50m ?
+        //test/improve webgl
+        //add some rivers ?
+        //extract hill shading and reuse with accessibility map
 
 
-    const styleCLCWater = new gridviz.ShapeColorSizeStyle({ color: () => seaColor })
-    /*const styleCLCWater = new gridviz.SquareColorCategoryWebGLStyle({
-        code: (cell) => "a",
-        color: { 'a': seaColor },
-    })*/
+        const seaColor = "#a4c8e1"
+
+        const map = new gridviz.Map(document.getElementById('map'), {
+            x: 4200000, y: 2800000, z: 1000,
+            backgroundColor: seaColor
+        })
+            .setZoomExtent([10, 5000])
+            .addZoomButtons()
+
+        const datasetRelief = new gridviz.MultiResolutionDataset(
+            [100, 200, 500, 1000, 2000, 5000, 10000, 20000],
+            resolution => new gviz_par.TiledParquetGrid(map,
+                "https://raw.githubusercontent.com/jgaffuri/tiled-euroDEM/main/pub/v1/tiles_" + resolution + "/"),
+            { preprocess: (c) => c.v != undefined && c.v > 0 }
+        )
+
+        const datasetPop = new gridviz.MultiResolutionDataset(
+            [100, 200, 500, 1000, 2000, 5000, 10000, 20000, 50000],
+            resolution => new gviz_par.TiledParquetGrid(map,
+                "https://raw.githubusercontent.com/jgaffuri/europop100m/main/pub/JRC_100m/" + resolution + "/"),
+        )
+
+        const datasetCLC = new gridviz.MultiResolutionDataset(
+            [100, 200, 500, 1000, 2000, 5000, 10000, 20000, 50000, 100000],
+            (resolution) => new gviz_par.TiledParquetGrid(map,
+                'https://raw.githubusercontent.com/eurostat/LCMap/main/pub/clc/v1/2018/' + resolution + '/'),
+            { preprocess: (c) => c.code == 40 || c.code == 41 || c.code == 42 || c.code == 43 || c.code == 44 }
+        )
 
 
-    const scalePopulation = gridviz.logarithmicScale(-3)
-    const stylePopulation = new gridviz.ShapeColorSizeStyle({
-        viewScale: cells => d3.max(cells, c => +c.POP_2021),
-        shape: () => "circle",
-        size: (c, r, z, max) => {
-            let t = +c.POP_2021 / max
-            //t = Math.pow(t, 0.6)
-            t = scalePopulation(t)
-            t = r * t * 1.4
-            if (t / z > 3) return t
-        },
-        color: () => "#aaa", //"#555",
-    })
+        //define style
+        const colors = []
+        for (let i = 0; i <= 1; i += 0.08) colors.push(d3.interpolateRdYlGn(1 - i))
+        const classNumber = colors.length
 
 
-    //TODO move to gridviz ?
-    function getShadingStyle(field, exageration = 1, reliefDirection = 1, diamond = false) {
-        // compute side value as elevation difference and attach to side
-        const sideValue = (side) => {
-            if (!side.c1) side.v = 0
-            else if (!side.c2) side.v = 0
-            else if (!side.c1[field]) side.v = 0
-            else if (!side.c2[field]) side.v = 0
-            else side.v = +side.c2[field] - side.c1[field]
-            return side.v
+        const styleCLCWater = new gridviz.ShapeColorSizeStyle({ color: () => seaColor })
+        /*const styleCLCWater = new gridviz.SquareColorCategoryWebGLStyle({
+            code: (cell) => "a",
+            color: { 'a': seaColor },
+        })*/
+
+
+        const scalePopulation = gridviz.logarithmicScale(-3)
+        const stylePopulation = new gridviz.ShapeColorSizeStyle({
+            viewScale: cells => d3.max(cells, c => +c.POP_2021),
+            shape: () => "circle",
+            size: (c, r, z, max) => {
+                let t = +c.POP_2021 / max
+                //t = Math.pow(t, 0.6)
+                t = scalePopulation(t)
+                t = r * t * 1.4
+                if (t / z > 3) return t
+            },
+            color: () => "#aaa", //"#555",
+        })
+
+
+        //TODO move to gridviz ?
+        function getShadingStyle(field, exageration = 1, reliefDirection = 1, diamond = false) {
+            // compute side value as elevation difference and attach to side
+            const sideValue = (side) => {
+                if (!side.c1) side.v = 0
+                else if (!side.c2) side.v = 0
+                else if (!side.c1[field]) side.v = 0
+                else if (!side.c2[field]) side.v = 0
+                else side.v = +side.c2[field] - side.c1[field]
+                return side.v
+            }
+
+            const scale = gridviz.exponentialScale(-exageration)
+            return new gridviz.SideStyle({
+                // return max side value for normalisation
+                viewScale: sides => d3.max(sides, s => sideValue(s)),
+                color: (side, resolution, z, max) => {
+                    if (side.v == 0) return
+                    let coeff = Math.abs(side.v / max)
+                    coeff = scale(coeff)
+                    if ((side.v * reliefDirection < 0 && side.or === 'h') || (side.v * reliefDirection > 0 && side.or === 'v'))
+                        return 'rgba(255,255,255,' + coeff + ')'
+                    return 'rgba(0,0,0,' + coeff + ')'
+                },
+                width: (side, r, z) => Math.min(2 * z, r / 3),
+                diamond: diamond,
+            })
+        }
+        const shadingStyle = getShadingStyle('v', 1, 1, false)
+
+        const blendOperation = (z) => 'multiply' //(z < 200 ? 'multiply' : 'source-over')
+        //    blendOperation: blendOperation,
+
+        const labelLayer = new gridviz.LabelLayer(gridviz_eurostat.getEuronymeLabelLayer('EUR', 20))
+        const boundariesLayer = new gridviz.GeoJSONLayer(gridviz_eurostat.getEurostatBoundariesLayer({ col: "#cc6699", scale: "03M" }))
+        const roadsLayer = new gridviz.BackgroundLayer({
+            url: "https://raw.githubusercontent.com/jgaffuri/gridStatBaseMap/main/pub/road/",
+            resolutions: Array.from({ length: 13 }, (_, i) => 114688 / Math.pow(2, i)),
+            origin: [0, 6000000],
+            nbPix: 512,
+            //visible: (z) => z > 4, //&& z < 2100,
+            pixelationCoefficient: 0.55,
+            blendOperation: blendOperation,
+        })
+
+        // tooltip content
+        const cellInfoHTMLPop = (c) => `Population: ${c.POP_2021}`
+        const cellInfoHTMLRelief = (c) => `Elevation: ${c.v}`
+
+        const cbHillshading = document.getElementById("cbHillshading");
+        const cbRelief = document.getElementById("cbRelief");
+        const cbCLC = document.getElementById("cbCLC");
+        const cbPopulation = document.getElementById("cbPopulation");
+        const cbLabels = document.getElementById("cbLabels");
+        const cbBoundaries = document.getElementById("cbBoundaries");
+        const cbRoads = document.getElementById("cbRoads");
+        const cbSeaLevel = document.getElementById("cbSeaLevel");
+
+        const sSeaLavel = document.getElementById('sSeaLavel');
+        const lbSeaLevel = document.getElementById('sliderValue');
+        const cbHypssea = document.getElementById("cbHypssea");
+
+        function update() {
+            const seaLevel = +sSeaLavel.value;
+            lbSeaLevel.textContent = sSeaLavel.value + ' m';
+
+            const styleWater = new gridviz.ShapeColorSizeStyle({
+                color: (c, r, z, vs) => {
+                    if (c.v > seaLevel) return
+                    return seaColor + "bb"
+                }
+            })
+
+            const adj = cbHypssea.checked
+            //const scaleRelief = gridviz.exponentialScale(-2)
+            const scaleRelief = gridviz.logarithmicScale(-2)
+            const styleRelief = new gridviz.ShapeColorSizeStyle({
+                viewScale: cells => d3.extent(cells, c => +c.v),
+                color: (c, r, z, vs) => {
+                    const min = adj ? Math.max(vs[0], seaLevel) : vs[0]
+                    let t = (c.v - min) / (vs[1] - min)
+                    //t = Math.pow(t, 0.6)
+                    t = scaleRelief(t)
+                    t = Math.floor(t * classNumber)
+                    if (t >= classNumber) t = classNumber - 1
+                    return colors[t]
+                },
+                size: (c, r) => r * 1.1
+            })
+
+
+            const layers = []
+            // relief
+            if (cbRelief.checked) layers.push(new gridviz.GridLayer(datasetRelief, [styleRelief], { minPixelsPerCell: 1.6, cellInfoHTML: cellInfoHTMLRelief }))
+            //relief shading
+            if (cbHillshading.checked) layers.push(new gridviz.GridLayer(datasetRelief, [shadingStyle], { minPixelsPerCell: 1.6, cellInfoHTML: 'none' }))
+            // CLC waters
+            if (cbCLC.checked) layers.push(new gridviz.GridLayer(datasetCLC, [styleCLCWater], { minPixelsPerCell: 1.6, cellInfoHTML: 'none' }))
+            // population
+            if (cbPopulation.checked) layers.push(new gridviz.GridLayer(datasetPop, [stylePopulation], { minPixelsPerCell: 4, cellInfoHTML: cellInfoHTMLPop }))
+            //boundaries
+            if (cbBoundaries.checked) layers.push(boundariesLayer);
+            //roads
+            if (cbRoads.checked) layers.push(roadsLayer);
+            // sea level
+            if (cbSeaLevel.checked) layers.push(new gridviz.GridLayer(datasetRelief, [styleWater], { minPixelsPerCell: 1.6, cellInfoHTML: 'none' }))
+            // labels
+            if (cbLabels.checked) layers.push(labelLayer)
+            map.layers = layers
+
+            map.redraw()
         }
 
-        const scale = gridviz.exponentialScale(-exageration)
-        return new gridviz.SideStyle({
-            // return max side value for normalisation
-            viewScale: sides => d3.max(sides, s => sideValue(s)),
-            color: (side, resolution, z, max) => {
-                if (side.v == 0) return
-                let coeff = Math.abs(side.v / max)
-                coeff = scale(coeff)
-                if ((side.v * reliefDirection < 0 && side.or === 'h') || (side.v * reliefDirection > 0 && side.or === 'v'))
-                    return 'rgba(255,255,255,' + coeff + ')'
-                return 'rgba(0,0,0,' + coeff + ')'
-            },
-            width: (side, r, z) => Math.min(2 * z, r / 3),
-            diamond: diamond,
-        })
-    }
-    const shadingStyle = getShadingStyle('v', 1, 1, false)
+        // sea level GUI
+        sSeaLavel.addEventListener('input', update);
+        // hill shading GUI
+        cbHillshading.addEventListener("change", update);
+        cbRelief.addEventListener("change", update);
+        cbCLC.addEventListener("change", update);
+        cbPopulation.addEventListener("change", update);
+        cbLabels.addEventListener("change", update);
+        cbBoundaries.addEventListener("change", update);
+        cbRoads.addEventListener("change", update);
+        cbSeaLevel.addEventListener("change", update);
+        cbHypssea.addEventListener("change", update);
 
-    const blendOperation = (z) => 'multiply' //(z < 200 ? 'multiply' : 'source-over')
-    //    blendOperation: blendOperation,
+        update()
+    </script>
 
-    const labelLayer = new gridviz.LabelLayer(gridviz_eurostat.getEuronymeLabelLayer('EUR', 20))
-    const boundariesLayer = new gridviz.GeoJSONLayer(gridviz_eurostat.getEurostatBoundariesLayer({ col: "#cc6699", scale: "03M" }))
-    const roadsLayer = new gridviz.BackgroundLayer({
-        url: "https://raw.githubusercontent.com/jgaffuri/gridStatBaseMap/main/pub/road/",
-        resolutions: Array.from({ length: 13 }, (_, i) => 114688 / Math.pow(2, i)),
-        origin: [0, 6000000],
-        nbPix: 512,
-        //visible: (z) => z > 4, //&& z < 2100,
-        pixelationCoefficient: 0.55,
-        blendOperation: blendOperation,
-    })
+</body>
 
-    // tooltip content
-    const cellInfoHTMLPop = (c) => `Population: ${c.POP_2021}`
-    const cellInfoHTMLRelief = (c) => `Elevation: ${c.v}`
-
-    const cbHillshading = document.getElementById("cbHillshading");
-    const cbRelief = document.getElementById("cbRelief");
-    const cbCLC = document.getElementById("cbCLC");
-    const cbPopulation = document.getElementById("cbPopulation");
-    const cbLabels = document.getElementById("cbLabels");
-    const cbBoundaries = document.getElementById("cbBoundaries");
-    const cbRoads = document.getElementById("cbRoads");
-    const cbSeaLevel = document.getElementById("cbSeaLevel");
-
-    const sSeaLavel = document.getElementById('sSeaLavel');
-    const lbSeaLevel = document.getElementById('sliderValue');
-    const cbHypssea = document.getElementById("cbHypssea");
-
-    function update() {
-        const seaLevel = +sSeaLavel.value;
-        lbSeaLevel.textContent = sSeaLavel.value + ' m';
-
-        const styleWater = new gridviz.ShapeColorSizeStyle({
-            color: (c, r, z, vs) => {
-                if (c.v > seaLevel) return
-                return seaColor + "bb"
-            }
-        })
-
-        const adj = cbHypssea.checked
-        //const scaleRelief = gridviz.exponentialScale(-2)
-        const scaleRelief = gridviz.logarithmicScale(-2)
-        const styleRelief = new gridviz.ShapeColorSizeStyle({
-            viewScale: cells => d3.extent(cells, c => +c.v),
-            color: (c, r, z, vs) => {
-                const min = adj ? Math.max(vs[0], seaLevel) : vs[0]
-                let t = (c.v - min) / (vs[1] - min)
-                //t = Math.pow(t, 0.6)
-                t = scaleRelief(t)
-                t = Math.floor(t * classNumber)
-                if (t >= classNumber) t = classNumber - 1
-                return colors[t]
-            },
-            size: (c, r) => r * 1.1
-        })
-
-
-        const layers = []
-        // relief
-        if (cbRelief.checked) layers.push(new gridviz.GridLayer(datasetRelief, [styleRelief], { minPixelsPerCell: 1.6, cellInfoHTML: cellInfoHTMLRelief }))
-        //relief shading
-        if (cbHillshading.checked) layers.push(new gridviz.GridLayer(datasetRelief, [shadingStyle], { minPixelsPerCell: 1.6, cellInfoHTML: 'none' }))
-        // CLC waters
-        if (cbCLC.checked) layers.push(new gridviz.GridLayer(datasetCLC, [styleCLCWater], { minPixelsPerCell: 1.6, cellInfoHTML: 'none' }))
-        // population
-        if (cbPopulation.checked) layers.push(new gridviz.GridLayer(datasetPop, [stylePopulation], { minPixelsPerCell: 4, cellInfoHTML: cellInfoHTMLPop }))
-        //boundaries
-        if (cbBoundaries.checked) layers.push(boundariesLayer);
-        //roads
-        if (cbRoads.checked) layers.push(roadsLayer);
-        // sea level
-        if (cbSeaLevel.checked) layers.push(new gridviz.GridLayer(datasetRelief, [styleWater], { minPixelsPerCell: 1.6, cellInfoHTML: 'none' }))
-        // labels
-        if (cbLabels.checked) layers.push(labelLayer)
-        map.layers = layers
-
-        map.redraw()
-    }
-
-    // sea level GUI
-    sSeaLavel.addEventListener('input', update);
-    // hill shading GUI
-    cbHillshading.addEventListener("change", update);
-    cbRelief.addEventListener("change", update);
-    cbCLC.addEventListener("change", update);
-    cbPopulation.addEventListener("change", update);
-    cbLabels.addEventListener("change", update);
-    cbBoundaries.addEventListener("change", update);
-    cbRoads.addEventListener("change", update);
-    cbSeaLevel.addEventListener("change", update);
-    cbHypssea.addEventListener("change", update);
-
-    update()
-</script>
+</html>
