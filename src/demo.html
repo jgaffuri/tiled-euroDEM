@@ -209,7 +209,7 @@
             const adj = cbHypssea.checked
             //const scaleRelief = gridviz.exponentialScale(-1)
             const scaleRelief = gridviz.logarithmicScale(-2)
-            let styleRelief = new gridviz.ShapeColorSizeStyle({
+            /*let styleRelief_ = new gridviz.ShapeColorSizeStyle({
                 viewScale: cells => d3.extent(cells, c => getElevationValue(c)),
                 color: (c, r, z, [min, max]) => {
                     const min_ = adj ? Math.max(min, seaLevel) : min < 0 ? 0 : min
@@ -223,15 +223,15 @@
                     return colors[t]
                 },
                 size: (c, r, z) => r + z * 0.3
-            })
-
-            let styleRelief_ = new gridviz.SquareColorWebGLStyle({
+            })*/
+            let styleRelief = new gridviz.SquareColorWebGLStyle({
                 viewScale: cells => d3.extent(cells, c => getElevationValue(c)),
                 tFun: (c, r, z, [min, max]) => {
                     const min_ = adj ? Math.max(min, seaLevel) : min < 0 ? 0 : min
                     const val = getElevationValue(c)
                     if (val < 0 && (seaLevel==0 || (seaLevel>0 && !adj))) return 0
                     let t = (val - min_) / (max - min_)
+                    t = scaleRelief(t)
                     t = Math.floor(t * classNumber)/classNumber
                     return t
                 },
