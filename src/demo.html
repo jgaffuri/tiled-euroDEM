@@ -27,6 +27,9 @@
         <br>
         <label for="cbRelief"><input type="checkbox" id="cbRelief" checked>Relief hypsometric tints</label>
         <br>
+        <label>Relief smoothing</label>
+        <input type="range" min="0" max="30" value="0" id="sRelief" style="width: 200px" />
+        <br>
         <label for="cbCLC"><input type="checkbox" id="cbCLC" checked>Land cover waters</label>
         <br>
         <label for="cbPopulation"><input type="checkbox" id="cbPopulation" checked>Population dots</label>
@@ -37,10 +40,9 @@
         <br>
         <label for="cbRoads"><input type="checkbox" id="cbRoads" checked>Roads</label>
         <br>
-        <label for="sSeaLavel"><input type="checkbox" id="cbSeaLevel" checked>Sea level rise: <span
-                id="sliderValue"></span></label>
+        <label>Sea level rise: <span id="lbSeaLevel">-</span></label>
         <br>
-        <input type="range" id="sSeaLavel" min="0" max="80" step="1" value="0" style="width:200px;">
+        <input type="range" id="sSeaLevel" min="0" max="80" step="1" value="0" style="width:200px;">
         <br>
         <label for="cbHypssea"><input type="checkbox" id="cbHypssea">Adjust hypsometric colors to sea level</label>
     </div>
@@ -48,6 +50,7 @@
     <script src="https://cdn.jsdelivr.net/npm/gridviz@3.0.28"></script>
     <script src="https://cdn.jsdelivr.net/npm/gridviz-eurostat@2.2.2"></script>
     <script src="https://cdn.jsdelivr.net/npm/gridviz-parquet@1.1.1"></script>
+    <script src="https://cdn.jsdelivr.net/npm/gridviz-smoothing@2.0.2"></script>
     <script src="https://cdn.jsdelivr.net/npm/d3-array@3.2.4"></script>
     <script src="https://cdn.jsdelivr.net/npm/d3-color@3"></script>
     <script src="https://cdn.jsdelivr.net/npm/d3-interpolate@3"></script>
@@ -58,7 +61,7 @@
         //TODO
         //smoothing
         //reuse hill shading with accessibility map
-        //fix flooded areas in NL, etc. correct tiles - include <=0 cells. integrate with GEBCO ?
+        //fix flooded areas in NL, etc. correct tiles - include <=0 cells. integrate with GEBCO ? Test v<0.
         //DEM 50m ?
         //test webgl - faster ?
         //add some rivers ?
@@ -78,7 +81,7 @@
             [100, 200, 500, 1000, 2000, 5000, 10000, 20000],
             resolution => new gviz_par.TiledParquetGrid(map,
                 "https://raw.githubusercontent.com/jgaffuri/tiled-euroDEM/main/pub/v1/tiles_" + resolution + "/"),
-            { preprocess: (c) => c.v != undefined && c.v > 0 }
+            { preprocess: (c) => c.v != undefined && c.v != 0 }
         )
 
         const datasetPop = new gridviz.MultiResolutionDataset(
@@ -100,8 +103,7 @@
         for (let i = 0; i <= 1; i += 0.08) colors.push(d3.interpolateRdYlGn(1 - i))
         const classNumber = colors.length
 
-
-        const styleCLCWater = new gridviz.ShapeColorSizeStyle({ color: () => seaColor })
+        const styleCLCWater = new gridviz.ShapeColorSizeStyle({ color: () => seaColor, size: (c, r, z) => r + z*0.3 })
         /*const styleCLCWater = new gridviz.SquareColorCategoryWebGLStyle({
             code: (cell) => "a",
             color: { 'a': seaColor },
@@ -190,20 +192,19 @@
 
         const cbHillshading = document.getElementById("cbHillshading");
         const cbRelief = document.getElementById("cbRelief");
+        const sRelief = document.getElementById('sRelief');
         const cbCLC = document.getElementById("cbCLC");
         const cbPopulation = document.getElementById("cbPopulation");
         const cbLabels = document.getElementById("cbLabels");
         const cbBoundaries = document.getElementById("cbBoundaries");
         const cbRoads = document.getElementById("cbRoads");
-        const cbSeaLevel = document.getElementById("cbSeaLevel");
-
-        const sSeaLavel = document.getElementById('sSeaLavel');
-        const lbSeaLevel = document.getElementById('sliderValue');
+        const sSeaLevel = document.getElementById('sSeaLevel');
+        const lbSeaLevel = document.getElementById("lbSeaLevel");
         const cbHypssea = document.getElementById("cbHypssea");
 
         function update() {
-            const seaLevel = +sSeaLavel.value;
-            lbSeaLevel.textContent = sSeaLavel.value + ' m';
+            const seaLevel = +sSeaLevel.value;
+            lbSeaLevel.textContent = seaLevel + ' m';
 
             const styleWater = new gridviz.ShapeColorSizeStyle({
                 color: (c, r, z, vs) => {
@@ -218,7 +219,8 @@
             const styleRelief = new gridviz.ShapeColorSizeStyle({
                 viewScale: cells => d3.extent(cells, c => +c.v),
                 color: (c, r, z, [min, max]) => {
-                    const min_ = adj ? Math.max(min, seaLevel) : min
+                    const min_ = adj ? Math.max(min, seaLevel) : min<0 ? 0 : min
+                    if (c.v < 0) return colors[0]
                     let t = (c.v - min_) / (max - min_)
                     //t = Math.pow(t, 0.6)
                     t = scaleRelief(t)
@@ -226,7 +228,7 @@
                     if (t >= classNumber) t = classNumber - 1
                     return colors[t]
                 },
-                size: (c, r) => r * 1.1
+                size: (c, r, z) => r + z*0.3
             })
 
 
@@ -244,7 +246,7 @@
             //roads
             if (cbRoads.checked) layers.push(roadsLayer);
             // sea level
-            if (cbSeaLevel.checked) layers.push(new gridviz.GridLayer(datasetRelief, [styleWater], { minPixelsPerCell: 1.6, cellInfoHTML: 'none' }))
+            if (seaLevel) layers.push(new gridviz.GridLayer(datasetRelief, [styleWater], { minPixelsPerCell: 1.6, cellInfoHTML: 'none' }))
             // labels
             if (cbLabels.checked) layers.push(labelLayer)
             map.layers = layers
@@ -252,17 +254,16 @@
             map.redraw()
         }
 
-        // sea level GUI
-        sSeaLavel.addEventListener('input', update);
-        // hill shading GUI
+        //add event listeners
+        sSeaLevel.addEventListener('input', update);
         cbHillshading.addEventListener("change", update);
         cbRelief.addEventListener("change", update);
+        sRelief.addEventListener("input", update);
         cbCLC.addEventListener("change", update);
         cbPopulation.addEventListener("change", update);
         cbLabels.addEventListener("change", update);
         cbBoundaries.addEventListener("change", update);
         cbRoads.addEventListener("change", update);
-        cbSeaLevel.addEventListener("change", update);
         cbHypssea.addEventListener("change", update);
 
         update()
