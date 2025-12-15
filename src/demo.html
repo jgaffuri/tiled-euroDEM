@@ -122,7 +122,7 @@
         })*/
 
 
-        
+
         const strokeWidthPix = 1
         const fillColor = "white"
         const strokeColor = "black"
@@ -150,7 +150,7 @@
                 for (let c of cells) {
                     //get circle size
                     const sG = radiusFactor * r * scalePopulation(c.POP_2021 / max);
-                    if (sG/z < 3) continue
+                    if (sG / z < 3) continue
 
                     //draw circle
                     ctx.beginPath();
@@ -237,13 +237,13 @@
             })
 
             const adj = cbHypssea.checked
-            //const scaleRelief = gridviz.exponentialScale(-2)
+            //const scaleRelief = gridviz.exponentialScale(-1)
             const scaleRelief = gridviz.logarithmicScale(-2)
             const styleRelief = new gridviz.ShapeColorSizeStyle({
                 viewScale: cells => d3.extent(cells, c => +c.v),
-                color: (c, r, z, vs) => {
-                    const min = adj ? Math.max(vs[0], seaLevel) : vs[0]
-                    let t = (c.v - min) / (vs[1] - min)
+                color: (c, r, z, [min, max]) => {
+                    const min_ = adj ? Math.max(min, seaLevel) : min
+                    let t = (c.v - min_) / (max - min_)
                     //t = Math.pow(t, 0.6)
                     t = scaleRelief(t)
                     t = Math.floor(t * classNumber)
