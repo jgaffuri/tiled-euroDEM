@@ -45,7 +45,7 @@
         <label for="cbHypssea"><input type="checkbox" id="cbHypssea">Adjust hypsometric colors to sea level</label>
     </div>
 
-    <script src="https://cdn.jsdelivr.net/npm/gridviz@3.0.27"></script>
+    <script src="https://cdn.jsdelivr.net/npm/gridviz@3.0.28"></script>
     <script src="https://cdn.jsdelivr.net/npm/gridviz-eurostat@2.2.2"></script>
     <script src="https://cdn.jsdelivr.net/npm/gridviz-parquet@1.1.1"></script>
     <script src="https://cdn.jsdelivr.net/npm/d3-array@3.2.4"></script>
@@ -56,12 +56,13 @@
 
 
         //TODO
+        //smoothing
+        //extract hill shading and reuse with accessibility map
         //fix flooded areas in NL, etc. correct tiles - include <=0 cells. integrate with GEBCO ?
         //DEM 50m ?
         //test webgl - faster ?
         //add some rivers ?
         //legend ?
-        //extract hill shading and reuse with accessibility map
 
 
         const seaColor = "#a4c8e1"
@@ -124,10 +125,10 @@
 
 
         const strokeWidthPix = 1
-        const fillColor = "white"
-        const strokeColor = "black"
-        const radiusFactor = 1.5
-        const scalePopulation = gridviz.logarithmicScale(-4)
+        const fillColor = "#fffc"
+        const strokeColor = "#666"
+        const radiusFactor = 1.4
+        const scalePopulation = gridviz.logarithmicScale(-3)
         const bertinPointsStyle = new gridviz.Style({
             drawFun: (cells, cg, r) => {
                 //keep only cells with population
@@ -162,39 +163,14 @@
         })
 
 
+        const shadingStyle = new gridviz.ShadingStyle({
+            elevation: 'v',
+            scale: gridviz.exponentialScale(-1),
+            colorTopLeft: "255,155,155",
+            colorBottomRight: "0,0,100",
+            //diamond: true,
+        })
 
-        //TODO move to gridviz ?
-        function getShadingStyle(field, exageration = 1, reliefDirection = 1, diamond = false) {
-            // compute side value as elevation difference and attach to side
-            const sideValue = (side) => {
-                if (!side.c1) side.v = 0
-                else if (!side.c2) side.v = 0
-                else if (!side.c1[field]) side.v = 0
-                else if (!side.c2[field]) side.v = 0
-                else side.v = +side.c2[field] - side.c1[field]
-                return side.v
-            }
-
-            const scale = gridviz.exponentialScale(-exageration)
-            return new gridviz.SideStyle({
-                // return max side value for normalisation
-                viewScale: sides => d3.max(sides, s => sideValue(s)),
-                color: (side, resolution, z, max) => {
-                    if (side.v == 0) return
-                    let coeff = Math.abs(side.v / max)
-                    coeff = scale(coeff)
-                    if ((side.v * reliefDirection < 0 && side.or === 'h') || (side.v * reliefDirection > 0 && side.or === 'v'))
-                        return 'rgba(255,255,255,' + coeff + ')'
-                    return 'rgba(0,0,0,' + coeff + ')'
-                },
-                width: (side, r, z) => Math.min(2 * z, r / 3),
-                diamond: diamond,
-            })
-        }
-        const shadingStyle = getShadingStyle('v', 1, 1, false)
-
-        const blendOperation = (z) => 'multiply' //(z < 200 ? 'multiply' : 'source-over')
-        //    blendOperation: blendOperation,
 
         const labelLayer = new gridviz.LabelLayer(gridviz_eurostat.getEuronymeLabelLayer('EUR', 20))
         const boundariesLayer = new gridviz.GeoJSONLayer(gridviz_eurostat.getEurostatBoundariesLayer({ col: "#cc6699", scale: "03M" }))
@@ -205,7 +181,7 @@
             nbPix: 512,
             //visible: (z) => z > 4, //&& z < 2100,
             pixelationCoefficient: 0.55,
-            blendOperation: blendOperation,
+            blendOperation: (z) => 'multiply',
         })
 
         // tooltip content
