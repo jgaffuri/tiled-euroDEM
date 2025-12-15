@@ -71,6 +71,7 @@
 
 
         const seaColor = "#a4c8e1"
+        const seaColorT = seaColor + "bb"
 
         const map = new gridviz.Map(document.getElementById('map'), {
             x: 4200000, y: 2800000, z: 1000,
@@ -208,9 +209,14 @@
             let styleWater = new gridviz.ShapeColorSizeStyle({
                 color: (c, r, z, vs) => {
                     if (getElevationValue(c) > seaLevel) return
-                    return seaColor + "bb"
+                    return seaColorT
                 }
             })
+            /*let styleWater = new gridviz.SquareColorCategoryWebGLStyle({
+                code: (c) => getElevationValue(c) > seaLevel ? undefined : "a",
+                color: { 'a': seaColorT },
+            })*/
+
 
             const adj = cbHypssea.checked
             const scaleReliefCoeff = -2 - 0.3 * +sReliefExageration.value
