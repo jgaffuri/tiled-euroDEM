@@ -7,7 +7,7 @@
 
 <body style="margin: 0; height: 100%; font-family: Arial, Helvetica, sans-serif; overflow: hidden">
 
-    <div id="map" style="height: 600px; width: 100%"></div>
+    <div id="map" style="height: 100%; width: 100%"></div>
 
     <div style="
                 font-size: 0.9em;
@@ -23,28 +23,28 @@
                 line-height: 1.6;
                 box-shadow: 3px 3px 3px grey, -3px -3px 3px #ddd;
             ">
-        <label for="cbHillshading"><input type="checkbox" id="cbHillshading">Relief hillshading (slow)</label>
+        <label>Sea level rise: <span id="lbSeaLevel">-</span></label>
         <br>
-        <label for="cbRelief"><input type="checkbox" id="cbRelief" checked>Relief hypsometric tints</label>
+        <input type="range" id="sSeaLevel" min="0" max="150" step="1" value="0" style="width:300px;">
         <br>
-        <label>Relief smoothing</label>
-        <input type="range" min="0" max="30" value="0" id="sRelief" style="width: 200px" />
-        <br>
-        <label for="cbCLC"><input type="checkbox" id="cbCLC" checked>Land cover waters</label>
+        <label for="cbHypssea"><input type="checkbox" id="cbHypssea">Adjust hypsometric colors to sea level</label>
+        <hr>
+        <label for="cbLabels"><input type="checkbox" id="cbLabels" checked>City names</label>
         <br>
         <label for="cbPopulation"><input type="checkbox" id="cbPopulation" checked>Population dots</label>
-        <br>
-        <label for="cbLabels"><input type="checkbox" id="cbLabels" checked>City names</label>
         <br>
         <label for="cbBoundaries"><input type="checkbox" id="cbBoundaries" checked>Boundaries</label>
         <br>
         <label for="cbRoads"><input type="checkbox" id="cbRoads" checked>Roads</label>
         <br>
-        <label>Sea level rise: <span id="lbSeaLevel">-</span></label>
+        <label for="cbCLC"><input type="checkbox" id="cbCLC" checked>Land cover waters</label>
         <br>
-        <input type="range" id="sSeaLevel" min="0" max="80" step="1" value="0" style="width:200px;">
+        <label for="cbRelief"><input type="checkbox" id="cbRelief" checked>Relief hypsometric tints</label>
+        <hr>
+        <label for="cbHillshading"><input type="checkbox" id="cbHillshading">Relief hillshading (slow)</label>
         <br>
-        <label for="cbHypssea"><input type="checkbox" id="cbHypssea">Adjust hypsometric colors to sea level</label>
+        <label>Relief smoothing (slow)</label>
+        <input type="range" min="0" max="4" value="0" step="0.05" id="sRelief" style="width: 200px" />
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/gridviz@3.0.28"></script>
@@ -59,9 +59,8 @@
 
 
         //TODO
-        //smoothing
-        //reuse hill shading with accessibility map
         //fix flooded areas in NL, etc. correct tiles - include <=0 cells. integrate with GEBCO ? Test v<0.
+        //reuse hill shading with accessibility map
         //DEM 50m ?
         //test webgl - faster ?
         //add some rivers ?
@@ -103,7 +102,7 @@
         for (let i = 0; i <= 1; i += 0.08) colors.push(d3.interpolateRdYlGn(1 - i))
         const classNumber = colors.length
 
-        const styleCLCWater = new gridviz.ShapeColorSizeStyle({ color: () => seaColor, size: (c, r, z) => r + z*0.3 })
+        const styleCLCWater = new gridviz.ShapeColorSizeStyle({ color: () => seaColor, size: (c, r, z) => r + z * 0.3 })
         /*const styleCLCWater = new gridviz.SquareColorCategoryWebGLStyle({
             code: (cell) => "a",
             color: { 'a': seaColor },
@@ -165,15 +164,6 @@
         })
 
 
-        const shadingStyle = new gridviz.ShadingStyle({
-            elevation: 'v',
-            scale: gridviz.exponentialScale(-1),
-            colorTopLeft: "255,155,155",
-            colorBottomRight: "0,0,100",
-            //diamond: true,
-        })
-
-
         const labelLayer = new gridviz.LabelLayer(gridviz_eurostat.getEuronymeLabelLayer('EUR', 20))
         const boundariesLayer = new gridviz.GeoJSONLayer(gridviz_eurostat.getEurostatBoundariesLayer({ col: "#cc6699", scale: "03M" }))
         const roadsLayer = new gridviz.BackgroundLayer({
@@ -213,32 +203,65 @@
                 }
             })
 
+            const sr = +sRelief.value
+            const getElevationValue = sr == 0 ? (c) => +c.v : (c) => +c.ksmval
+
             const adj = cbHypssea.checked
             //const scaleRelief = gridviz.exponentialScale(-1)
             const scaleRelief = gridviz.logarithmicScale(-2)
-            const styleRelief = new gridviz.ShapeColorSizeStyle({
-                viewScale: cells => d3.extent(cells, c => +c.v),
+            let styleRelief = new gridviz.ShapeColorSizeStyle({
+                viewScale: cells => d3.extent(cells, c => getElevationValue(c)),
                 color: (c, r, z, [min, max]) => {
-                    const min_ = adj ? Math.max(min, seaLevel) : min<0 ? 0 : min
-                    if (c.v < 0) return colors[0]
-                    let t = (c.v - min_) / (max - min_)
+                    const min_ = adj ? Math.max(min, seaLevel) : min < 0 ? 0 : min
+                    const val = getElevationValue(c)
+                    if (val < 0) return colors[0]
+                    let t = (val - min_) / (max - min_)
                     //t = Math.pow(t, 0.6)
                     t = scaleRelief(t)
                     t = Math.floor(t * classNumber)
                     if (t >= classNumber) t = classNumber - 1
                     return colors[t]
                 },
-                size: (c, r, z) => r + z*0.3
+                size: (c, r, z) => r + z * 0.3
             })
 
+            let shadingStyle = new gridviz.ShadingStyle({
+                elevation: sr == 0 ? 'v' : 'ksmval',
+                scale: gridviz.exponentialScale(-1),
+                //colorTopLeft: "255,155,155",
+                //colorBottomRight: "0,0,100",
+                //diamond: true,
+            })
 
+            // smoothing
+            if (sr > 0) {
+                styleRelief =
+                    new gridviz_smoothing.KernelSmoothingStyle({
+                        value: (cell) => +cell.v,
+                        sigma: (r, z) => r * (sr + 0.5),
+                        factor: 2,
+                        filterSmoothed: (value) => value > 0.0005,
+                        styles: [styleRelief]
+                    })
+                shadingStyle =
+                    new gridviz_smoothing.KernelSmoothingStyle({
+                        value: (cell) => +cell.v,
+                        sigma: (r, z) => r * (sr + 0.5),
+                        factor: 2,
+                        filterSmoothed: (value) => value > 0.0005,
+                        styles: [shadingStyle]
+                    })
+            }
+
+            // set layers
             const layers = []
+            const mppc = 1.7
             // relief
-            if (cbRelief.checked) layers.push(new gridviz.GridLayer(datasetRelief, [styleRelief], { minPixelsPerCell: 1.6, cellInfoHTML: cellInfoHTMLRelief }))
+            if (cbRelief.checked) layers.push(new gridviz.GridLayer(datasetRelief, [styleRelief], { minPixelsPerCell: mppc, cellInfoHTML: cellInfoHTMLRelief }))
             //relief shading
-            if (cbHillshading.checked) layers.push(new gridviz.GridLayer(datasetRelief, [shadingStyle], { minPixelsPerCell: 1.6, cellInfoHTML: 'none' }))
+            if (cbHillshading.checked) layers.push(new gridviz.GridLayer(datasetRelief, [shadingStyle], { minPixelsPerCell: mppc, cellInfoHTML: 'none' }))
             // CLC waters
-            if (cbCLC.checked) layers.push(new gridviz.GridLayer(datasetCLC, [styleCLCWater], { minPixelsPerCell: 1.6, cellInfoHTML: 'none' }))
+            if (cbCLC.checked) layers.push(new gridviz.GridLayer(datasetCLC, [styleCLCWater], { minPixelsPerCell: mppc, cellInfoHTML: 'none' }))
             // population
             if (cbPopulation.checked) layers.push(new gridviz.GridLayer(datasetPop, [bertinPointsStyle], { minPixelsPerCell: 4, cellInfoHTML: cellInfoHTMLPop }))
             //boundaries
@@ -246,7 +269,7 @@
             //roads
             if (cbRoads.checked) layers.push(roadsLayer);
             // sea level
-            if (seaLevel) layers.push(new gridviz.GridLayer(datasetRelief, [styleWater], { minPixelsPerCell: 1.6, cellInfoHTML: 'none' }))
+            if (seaLevel) layers.push(new gridviz.GridLayer(datasetRelief, [styleWater], { minPixelsPerCell: mppc, cellInfoHTML: 'none' }))
             // labels
             if (cbLabels.checked) layers.push(labelLayer)
             map.layers = layers
