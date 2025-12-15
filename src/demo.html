@@ -9,7 +9,7 @@
 
     <div id="map" style="height: 100%; width: 100%"></div>
 
-    <div style="
+    <div id="control" style="
                 font-size: 0.9em;
                 position: absolute;
                 left: 10px;
@@ -33,9 +33,9 @@
         <br>
         <label for="cbPopulation"><input type="checkbox" id="cbPopulation" checked>Population dots</label>
         <br>
-        <label for="cbBoundaries"><input type="checkbox" id="cbBoundaries" checked>Boundaries</label>
+        <label for="cbBoundaries"><input type="checkbox" id="cbBoundaries">Boundaries</label>
         <br>
-        <label for="cbRoads"><input type="checkbox" id="cbRoads" checked>Roads</label>
+        <label for="cbRoads"><input type="checkbox" id="cbRoads">Roads</label>
         <br>
         <label for="cbCLC"><input type="checkbox" id="cbCLC" checked>Land cover waters</label>
         <br>
@@ -43,8 +43,11 @@
         <hr>
         <label for="cbHillshading"><input type="checkbox" id="cbHillshading">Relief hillshading (slow)</label>
         <br>
+        <label>Relief exageration</label>
+        <input type="range" min="-10" max="10" value="0" step="1" id="sReliefExageration" style="width: 200px" />
+        <br>
         <label>Relief smoothing (slow)</label>
-        <input type="range" min="0" max="4" value="0" step="0.05" id="sRelief" style="width: 200px" />
+        <input type="range" min="0" max="4" value="0" step="0.05" id="sReliefSmoothing" style="width: 200px" />
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/gridviz@3.0.28"></script>
@@ -182,7 +185,8 @@
 
         const cbHillshading = document.getElementById("cbHillshading");
         const cbRelief = document.getElementById("cbRelief");
-        const sRelief = document.getElementById('sRelief');
+        const sReliefSmoothing = document.getElementById('sReliefSmoothing');
+        const sReliefExageration = document.getElementById('sReliefExageration');
         const cbCLC = document.getElementById("cbCLC");
         const cbPopulation = document.getElementById("cbPopulation");
         const cbLabels = document.getElementById("cbLabels");
@@ -192,23 +196,25 @@
         const lbSeaLevel = document.getElementById("lbSeaLevel");
         const cbHypssea = document.getElementById("cbHypssea");
 
+        let resolutionCoeff = 1
+
         function update() {
             const seaLevel = +sSeaLevel.value;
             lbSeaLevel.textContent = seaLevel + ' m';
 
-            const styleWater = new gridviz.ShapeColorSizeStyle({
+            const sr = +sReliefSmoothing.value
+            const getElevationValue = sr == 0 ? (c) => +c.v : (c) => +c.ksmval
+
+            let styleWater = new gridviz.ShapeColorSizeStyle({
                 color: (c, r, z, vs) => {
-                    if (c.v > seaLevel) return
+                    if (getElevationValue(c) > seaLevel) return
                     return seaColor + "bb"
                 }
             })
 
-            const sr = +sRelief.value
-            const getElevationValue = sr == 0 ? (c) => +c.v : (c) => +c.ksmval
-
             const adj = cbHypssea.checked
-            //const scaleRelief = gridviz.exponentialScale(-1)
-            const scaleRelief = gridviz.logarithmicScale(-2)
+            const scaleReliefCoeff = -2 - 0.3 * +sReliefExageration.value
+            const scaleRelief = gridviz.logarithmicScale(scaleReliefCoeff)
             /*let styleRelief_ = new gridviz.ShapeColorSizeStyle({
                 viewScale: cells => d3.extent(cells, c => getElevationValue(c)),
                 color: (c, r, z, [min, max]) => {
@@ -229,10 +235,10 @@
                 tFun: (c, r, z, [min, max]) => {
                     const min_ = adj ? Math.max(min, seaLevel) : min < 0 ? 0 : min
                     const val = getElevationValue(c)
-                    if (val < 0 && (seaLevel==0 || (seaLevel>0 && !adj))) return 0
+                    if (val < 0 && (seaLevel == 0 || (seaLevel > 0 && !adj))) return 0
                     let t = (val - min_) / (max - min_)
                     t = scaleRelief(t)
-                    t = Math.floor(t * classNumber)/classNumber
+                    t = Math.floor(t * classNumber) / classNumber
                     return t
                 },
                 colors: colors,
@@ -248,29 +254,23 @@
                 //diamond: true,
             })
 
-            // smoothing
+            // apply smoothing
             if (sr > 0) {
-                styleRelief =
-                    new gridviz_smoothing.KernelSmoothingStyle({
-                        value: (cell) => +cell.v,
-                        sigma: (r, z) => r * (sr + 0.5),
-                        factor: 2,
-                        filterSmoothed: (value) => value > 0.0005,
-                        styles: [styleRelief]
-                    })
-                shadingStyle =
-                    new gridviz_smoothing.KernelSmoothingStyle({
-                        value: (cell) => +cell.v,
-                        sigma: (r, z) => r * (sr + 0.5),
-                        factor: 2,
-                        filterSmoothed: (value) => value > 0.0005,
-                        styles: [shadingStyle]
-                    })
+                const fun = (style) => new gridviz_smoothing.KernelSmoothingStyle({
+                    value: (cell) => +cell.v,
+                    sigma: (r, z) => r * (sr + 0.5),
+                    factor: 2,
+                    filterSmoothed: (value) => value > 0.0005,
+                    styles: [style]
+                })
+                styleRelief = fun(styleRelief)
+                shadingStyle = fun(shadingStyle)
+                styleWater = fun(styleWater)
             }
 
             // set layers
             const layers = []
-            const mppc = 1.7
+            const mppc = 1.7 * resolutionCoeff
             // relief
             if (cbRelief.checked) layers.push(new gridviz.GridLayer(datasetRelief, [styleRelief], { minPixelsPerCell: mppc, cellInfoHTML: cellInfoHTMLRelief }))
             //relief shading
@@ -278,7 +278,7 @@
             // CLC waters
             if (cbCLC.checked) layers.push(new gridviz.GridLayer(datasetCLC, [styleCLCWater], { minPixelsPerCell: mppc, cellInfoHTML: 'none' }))
             // population
-            if (cbPopulation.checked) layers.push(new gridviz.GridLayer(datasetPop, [bertinPointsStyle], { minPixelsPerCell: 4, cellInfoHTML: cellInfoHTMLPop }))
+            if (cbPopulation.checked) layers.push(new gridviz.GridLayer(datasetPop, [bertinPointsStyle], { minPixelsPerCell: 4 * resolutionCoeff, cellInfoHTML: cellInfoHTMLPop }))
             //boundaries
             if (cbBoundaries.checked) layers.push(boundariesLayer);
             //roads
@@ -296,7 +296,8 @@
         sSeaLevel.addEventListener('input', update);
         cbHillshading.addEventListener("change", update);
         cbRelief.addEventListener("change", update);
-        sRelief.addEventListener("input", update);
+        sReliefSmoothing.addEventListener("input", update);
+        sReliefExageration.addEventListener("input", update);
         cbCLC.addEventListener("change", update);
         cbPopulation.addEventListener("change", update);
         cbLabels.addEventListener("change", update);
@@ -304,7 +305,24 @@
         cbRoads.addEventListener("change", update);
         cbHypssea.addEventListener("change", update);
 
+
+
+        //keyboard events
+        let animation = undefined
+        window.addEventListener('keypress', e => {
+            if (e.key == "h") {
+                const div = document.getElementById("control");
+                if (div.style.display === "none") div.style.display = "block"; // or "inline", "flex", etc.
+                else div.style.display = "none";
+            }
+            //else if (e.key == "w") { scaleReliefCoeff -= 0.3; console.log(scaleReliefCoeff); update() }
+            //else if (e.key == "x") { scaleReliefCoeff += 0.3; console.log(scaleReliefCoeff); update() }
+            else if (e.key == "+") { resolutionCoeff /= 1.2; console.log(resolutionCoeff); update() }
+            else if (e.key == "-") { resolutionCoeff *= 1.2; console.log(resolutionCoeff); update() }
+        })
+
         update()
+
     </script>
 
 </body>
