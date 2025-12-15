@@ -213,7 +213,7 @@
                 color: (c, r, z, [min, max]) => {
                     const min_ = adj ? Math.max(min, seaLevel) : min < 0 ? 0 : min
                     const val = getElevationValue(c)
-                    if (val < 0) return colors[0]
+                    if (val < 0 && (seaLevel==0 || (seaLevel>0 && !adj))) return colors[0]
                     let t = (val - min_) / (max - min_)
                     //t = Math.pow(t, 0.6)
                     t = scaleRelief(t)
