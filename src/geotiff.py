@@ -45,8 +45,8 @@ def resample_geotiff_aligned(input_path, output_path, new_resolution, resampling
         new_height = int((aligned_maxy - aligned_miny) / new_resolution)
         assert new_width > 0 and new_height > 0
 
-        print("New size:", new_width, new_height)
-        print("Total pixels:", new_width * new_height)
+        #print("New size:", new_width, new_height)
+        #print("Total pixels:", new_width * new_height)
 
         # New transform
         new_transform = Affine(
