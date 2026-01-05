@@ -7,6 +7,7 @@ from rasterio.enums import Resampling
 from datetime import datetime
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "../..")))
 from geotiff import resample_geotiff_aligned, mask_pixels_with_lambda
+import numpy as np
 
 #TODO
 # copy mask_pixels_with_lambda to pysco
@@ -34,7 +35,8 @@ if aggregate:
             print(datetime.now(), resolution, "exists, skip")
             continue
         print(datetime.now(), resolution)
-        resample_geotiff_aligned(input_dem, output_dem, resolution, Resampling.med, bigtiff=True)
+        resample_geotiff_aligned(input_dem, output_dem, resolution, Resampling.med, dtype=None, bigtiff=True, warp_mem_limit_GB=16)
+
 
 '''
 if set_no_data:

@@ -8,7 +8,7 @@ from rasterio.features import rasterize
 import numpy as np
 
 
-def resample_geotiff_aligned(input_path, output_path, new_resolution, resampling=Resampling.average, dtype=np.float64, bigtiff=False):
+def resample_geotiff_aligned(input_path, output_path, new_resolution, resampling=Resampling.average, dtype=np.float64, bigtiff=False, warp_mem_limit_GB=1):
     """
     Resamples a GeoTIFF to a new resolution (must be a multiple of the original),
     and aligns the origin point to a multiple of the new resolution.
@@ -19,13 +19,16 @@ def resample_geotiff_aligned(input_path, output_path, new_resolution, resampling
         new_resolution (float): Desired resolution (pixel size, e.g. in meters).
         resampling (): Resampling method.
     """
-    with rasterio.open(input_path, BIGTIFF='YES' if bigtiff else 'NO') as src:
+    with rasterio.open(input_path) as src:
         # Original resolution
         original_res_x = src.transform.a
         original_res_y = -src.transform.e
 
         # Check that new resolution is a multiple of original
-        if new_resolution % original_res_x != 0 or new_resolution % original_res_y != 0:
+        def is_multiple(a, b, tol=1e-9): return abs((a / b) - round(a / b)) < tol
+
+        if not is_multiple(new_resolution, original_res_x) or \
+        not is_multiple(new_resolution, original_res_y):
             raise ValueError("New resolution must be a multiple of the original resolution.")
 
         # Original bounds
@@ -40,6 +43,10 @@ def resample_geotiff_aligned(input_path, output_path, new_resolution, resampling
         # New dimensions
         new_width  = int((aligned_maxx - aligned_minx) / new_resolution)
         new_height = int((aligned_maxy - aligned_miny) / new_resolution)
+        assert new_width > 0 and new_height > 0
+
+        print("New size:", new_width, new_height)
+        print("Total pixels:", new_width * new_height)
 
         # New transform
         new_transform = Affine(
@@ -52,12 +59,20 @@ def resample_geotiff_aligned(input_path, output_path, new_resolution, resampling
         profile.update({
             'height': new_height,
             'width': new_width,
-            'transform': new_transform
+            'transform': new_transform,
+            'BIGTIFF': 'YES' if bigtiff else 'NO',
+            'nodata': src.nodata,
         })
 
-        if dtype is not None:
+        # define dtype
+        if dtype is None:
+            dtype = src.dtypes[0]
+            print("Keep input dtype:", dtype)
+        else:
             profile.update({ 'dtype': dtype })
 
+        assert src.crs is not None
+        assert src.transform.is_affine
 
         with rasterio.open(output_path, 'w', **profile) as dst:
             for i in range(1, src.count + 1):
@@ -69,10 +84,11 @@ def resample_geotiff_aligned(input_path, output_path, new_resolution, resampling
                     dst_transform=new_transform,
                     dst_crs=src.crs,
                     resampling=resampling,
-                    dtype=dtype
+                    dtype=dtype,
+                    warp_mem_limit= warp_mem_limit_GB * 1024 * 1024 * 1024,  # in GB
+                    src_nodata=src.nodata,
+                    dst_nodata=src.nodata,
                 )
-
-
 
 def mask_pixels_with_lambda_in_place(geotiff_path, band_number, predicate):
     """
