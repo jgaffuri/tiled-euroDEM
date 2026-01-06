@@ -11,8 +11,7 @@ import numpy as np
 
 #TODO
 # copy mask_pixels_with_lambda and new resample_geotiff_aligned to pysco
-# resample_geotiff_aligned
-
+# more detailled resolutions: 20m ?
 
 aggregate = True
 #set_no_data = True
