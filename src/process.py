@@ -10,9 +10,9 @@ from geotiff import resample_geotiff_aligned, mask_pixels_with_lambda
 import numpy as np
 
 #TODO
-# copy mask_pixels_with_lambda to pysco
+# copy mask_pixels_with_lambda and new resample_geotiff_aligned to pysco
 # resample_geotiff_aligned
-# demo
+
 
 aggregate = True
 #set_no_data = True
